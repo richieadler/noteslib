@@ -1,3 +1,8 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+
+"""Python classes for manipulating Lotus Notes/Domino objects via COM"""
+
 ################################################
 # Copyright (c) 2001-2008 Robert I. Follek (bfollek@gmail.com)
 #
@@ -23,12 +28,12 @@
 # OTHER DEALINGS IN THE SOFTWARE.
 ################################################
 
-r"""
-NotesLib.py is a library of Python classes for manipulating Lotus
+"""
+noteslib.py is a library of Python classes for manipulating Lotus
 Notes/Domino objects via COM.
 
-The NotesLib classes correspond to the standard LotusScript classes; they
-support all the standard properties and methods. The NotesLib classes have
+The noteslib classes correspond to the standard LotusScript classes; they
+support all the standard properties and methods. The noteslib classes have
 additional methods and ease-of-use features. See the documentation for the
 individual classes.
 
@@ -39,7 +44,7 @@ Classes available so far:
     ACLEntry
 """
 
-__version__ = "2.0"
+__version__ = "2.1rc1"
 
 import win32com.client
 
@@ -59,33 +64,33 @@ the same syntax.
 
 To create a Session object:
 
-    s = NotesLib.Session(password)
+    s = noteslib.Session(password)
 
 or
 
-    s = NotesLib.Session()
+    s = noteslib.Session()
 
 The password is optional; if you don't provide it, Notes will prompt you
 for a password.
 
 Example:
 
-    >>> import NotesLib
-    >>> s = NotesLib.Session("password")
+    >>> import noteslib
+    >>> s = noteslib.Session("password")
     >>> s.NotesBuildVersion
     166
     >>> s.GetEnvironmentString("Directory", -1)
-    u'd:\\notes5.8\\Data'
+    'd:\\notes5.8\\Data'
     >>>
 
 Session is a singleton - multiple Session variables share one Session
 object. You can instantiate Sessions as needed without a performance
 penalty, and you only have to establish a password once. Example:
 
-    >>> a = NotesLib.Session(password)
+    >>> a = noteslib.Session(password)
     >>> id(a)
     8429868
-    >>> b = NotesLib.Session()
+    >>> b = noteslib.Session()
     >>> id(b)
     8429868
     """
@@ -103,7 +108,7 @@ penalty, and you only have to establish a password once. Example:
 #
 # The attempt to connect to Notes is in Session.__call__ rather than Session.__init__
 # so that we don't try to connect when the "Session = Session()" line executes.
-# Otherwise, "import NotesLib" might try to connect, fail, and raise an exception.
+# Otherwise, "import noteslib" might try to connect, fail, and raise an exception.
 ################################################
 
     __CONNECT_ERROR = r"""
@@ -123,7 +128,7 @@ penalty, and you only have to establish a password once. Example:
             else:
                 self.__handle.Initialize()
         except:
-            raise SessionError, self.__CONNECT_ERROR
+            raise SessionError(self.__CONNECT_ERROR)
 
     def __call__(self, password=None):
         """Executes when an instance is invoked as a function. Singleton support."""
@@ -151,30 +156,30 @@ Session automatically.
 
 To create a Database object:
 
-    db = NotesLib.Database(server, database_file, password)
+    db = noteslib.Database(server, database_file, password)
 
 or
 
-    db = NotesLib.Database(server, database_file)
+    db = noteslib.Database(server, database_file)
 
 Example:
 
-    >>> import NotesLib
-    >>> db = NotesLib.Database("NYNotes1", "ACLTest.nsf", "password")
+    >>> import noteslib
+    >>> db = noteslib.Database("NYNotes1", "ACLTest.nsf", "password")
     >>> db.Created
-    <PyTime:6/30/01 11:12:40 AM>
+    pywintypes.datetime(2001, 6, 30, 11, 12, 40, tzinfo=TimeZoneInfo('GMT Standard Time', True))
 
 Multiple Database objects created for the same database are unique objects,
 but they share the same handle to the underlying NotesDatabase object.
 You can instantiate Database objects as needed without a performance
 penalty. Example:
 
-    >>> a = NotesLib.Database("NYNotes1", "ACLTest.nsf", "password")
+    >>> a = noteslib.Database("NYNotes1", "ACLTest.nsf", "password")
     >>> id(a)
     15281724
     >>> id(a._Database__handle)
     15286172
-    >>> b = NotesLib.Database("NYNotes1", "ACLTest.nsf")
+    >>> b = noteslib.Database("NYNotes1", "ACLTest.nsf")
     >>> id(b)
     15270044
     >>> id(b._Database__handle)
@@ -207,7 +212,7 @@ penalty. Example:
                 if self.__handle.IsOpen: # Make sure everything's okay.
                     self.__handleCache[cacheKey] = self.__handle # Cache the handle
             except:
-                raise DatabaseError, self.__DB_ERROR % (server, dbFile)
+                raise DatabaseError(self.__DB_ERROR % (server, dbFile))
 
     def __getattr__(self, name):
         """Delegate to the Notes object to support all properties and methods."""
@@ -232,18 +237,18 @@ creates its own Session and Database objects automatically.
 
 To create an ACL object:
 
-    acl = NotesLib.ACL(server, database_file, password)
+    acl = noteslib.ACL(server, database_file, password)
 
 or
 
-    acl = NotesLib.ACL(server, database_file)
+    acl = noteslib.ACL(server, database_file)
 
 Example:
 
-    >>> import NotesLib
-    >>> acl = NotesLib.ACL("NYNotes1", "ACLTest.nsf", "password")
+    >>> import noteslib
+    >>> acl = noteslib.ACL("NYNotes1", "ACLTest.nsf", "password")
     >>> for entry in acl.getAllEntries():
-    ...     print entry.getName()
+    ...     print (entry.getName())
     ...
     -Default-
     Alice Author
@@ -268,7 +273,7 @@ Example:
         self.__entries.sort()
 
     def getAllEntries(self):
-        """Returns a list of NotesLib ACLEntry objects, sorted by Name."""
+        """Returns a list of noteslib ACLEntry objects, sorted by Name."""
         return self.__entries
 
     def __getattr__(self, name):
@@ -307,9 +312,9 @@ getAllEntries() method.
 
 Example:
 
-    >>> import NotesLib
-    >>> acl = NotesLib.ACL("NYNotes1", "ACLTest.nsf", "password")
-    >>> print acl.getAllEntries()[3]
+    >>> import noteslib
+    >>> acl = noteslib.ACL("NYNotes1", "ACLTest.nsf", "password")
+    >>> print (acl.getAllEntries()[3])
     Name : bob
     Level: Manager
     Role : [Role1]
@@ -325,13 +330,12 @@ Example:
     Flag : Write Public Documents
     """
 
-    __ENCODING = "latin-1"
     __LEVELS = ["No Access", "Depositor", "Reader", "Author", "Editor", "Designer", "Manager"]
 
     def __init__(self, notesACLEntry):
         """The parameter is a LotusScript NotesACLEntry object."""
         self.__handle = notesACLEntry
-        self.__name = notesACLEntry.Name.encode(ACLEntry.__ENCODING)
+        self.__name = notesACLEntry.Name
         self.__level = self.__LEVELS[notesACLEntry.Level]
         self.__loadRoles(notesACLEntry)
         self.__loadFlags(notesACLEntry)
@@ -373,17 +377,16 @@ Example:
             self.__flags.append("Write Public Documents")
 
     def __loadRoles(self, notesACLEntry):
-        """Load the entry's roles into a list, then sort them."""
+        """Load the entry's roles into a sorted list."""
         roles = notesACLEntry.Roles
         if roles:
-            self.__roles = [r.encode(ACLEntry.__ENCODING) for r in roles]
-            self.__roles.sort()
+            self.__roles = sorted(roles)
         else:
             self.__roles = []
 
-    def __cmp__(self, other):
+    def __lt__(self, other):
         """For sorting: compare on name."""
-        return cmp( self.__name.lower(), other.__name.lower() )
+        return self.__name.lower() < other.__name.lower()
 
     def __getattr__(self, name):
         """Delegate to the Notes object to support all properties and methods."""
@@ -409,22 +412,22 @@ Example:
 
 def test():
     testServer = ""
-    testDB = "ACLTest.nsf"
+    testDB = "cache.ndk"
 
-    print "Testing Session"
+    print("Testing Session")
     s = Session()
-    print s.CommonUserName
+    print(s.CommonUserName)
 
-    print "Testing Database"
+    print("Testing Database")
     db = Database(testServer, testDB)
-    print db.Created
+    print(db.Created)
 
-    print "Testing ACL"
+    print("Testing ACL")
     acl = ACL(testServer, testDB)
-    print acl.Roles
+    print(acl.Roles)
 
-    print "Testing the full ACL print"
-    print acl
+    print("Testing the full ACL print")
+    print(acl)
 
 if __name__ == "__main__":
     test()
