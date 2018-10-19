@@ -9,7 +9,7 @@ author-email = "bfollek@gmail.com"
 maintainer = "Marcelo Huerta"
 maintainer-email = "richieadler@gmail.com"
 description-file = "doc/README.md"
-# requires-python = "=~3.0"
+requires-python = "~=3.0"
 requires = [
 	"pywin32",
 ]
