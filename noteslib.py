@@ -44,7 +44,7 @@ Classes available so far:
     ACLEntry
 """
 
-__version__ = "2.1rc1"
+__version__ = "2.1"
 
 import win32com.client
 
