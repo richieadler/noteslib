@@ -25,3 +25,16 @@ classifiers = [
 
 [tool.hatch.version]
 path = "src/noteslib/__init__.py"
+
+[tool.hatch.envs.test]
+platforms = ["windows"]
+python = "D:/Prog/Python310-32/python.exe"
+dependencies = [
+	"lxml",
+	"pytest",
+	"pytest-cov"
+]
+
+[tool.hatch.envs.test.scripts]
+test = "pytest --cov=src/noteslib --cov-report=term-missing tests"
+

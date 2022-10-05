@@ -63,7 +63,7 @@ penalty, and you only have to establish a password once. Example:
 
     __CONNECT_ERROR = r"""
 
-    Error connecting to Notes via COM.
+    Error connecting to Notes via COM: %s
     """
 
     def __init__(self):
@@ -77,8 +77,8 @@ penalty, and you only have to establish a password once. Example:
                 self.__handle.Initialize(password)
             else:
                 self.__handle.Initialize()
-        except:
-            raise SessionError(self.__CONNECT_ERROR)
+        except Exception as exc:
+            raise SessionError(self.__CONNECT_ERROR % exc)
 
     def __call__(self, password=None):
         """Executes when an instance is invoked as a function. Singleton support."""
