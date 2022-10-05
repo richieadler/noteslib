@@ -1,60 +1,10 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-
-"""Python classes for manipulating Lotus Notes/Domino objects via COM"""
-
-################################################
-# Copyright (c) 2001-2008 Robert I. Follek (bfollek@gmail.com)
-#
-# Permission is hereby granted, free of charge, to any person
-# obtaining a copy of this software and associated documentation
-# files (the "Software"), to deal in the Software without
-# restriction, including without limitation the rights to use,
-# copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the
-# Software is furnished to do so, subject to the following
-# conditions:
-#
-# The above copyright notice and this permission notice shall be
-# included in all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
-# EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
-# OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
-# NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
-# HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
-# WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-# FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
-# OTHER DEALINGS IN THE SOFTWARE.
-################################################
-
-"""
-noteslib.py is a library of Python classes for manipulating Lotus
-Notes/Domino objects via COM.
-
-The noteslib classes correspond to the standard LotusScript classes; they
-support all the standard properties and methods. The noteslib classes have
-additional methods and ease-of-use features. See the documentation for the
-individual classes.
-
-Classes available so far:
-    Session
-    Database
-    ACL
-    ACLEntry
-"""
-
-__version__ = "2.1.0"
 
 import win32com.client
-
-# -------------------------------------------------------------------
 
 class NotesLibError(Exception): pass
 class SessionError(NotesLibError): pass
 class DatabaseError(NotesLibError): pass
 
-# -------------------------------------------------------------------
 
 class Session:
     r"""
@@ -119,7 +69,7 @@ penalty, and you only have to establish a password once. Example:
     def __init__(self):
         self.__handle = None
 
-    def __connectToNotes(self, password=None):
+    def __connect_to_notes(self, password=None):
         """Connect to Notes via COM."""
         try:
             self.__handle = win32com.client.Dispatch("Lotus.NotesSession")
@@ -133,17 +83,16 @@ penalty, and you only have to establish a password once. Example:
     def __call__(self, password=None):
         """Executes when an instance is invoked as a function. Singleton support."""
         if not self.__handle:
-            self.__connectToNotes(password)
+            self.__connect_to_notes(password)
         return self
 
     def __getattr__(self, name):
         """Delegate to the Notes object to support all properties and methods."""
         return getattr(self.__handle, name)
 
-Session = Session() # Singleton support.
 
-# end class Session
-# -------------------------------------------------------------------
+Session = Session()  # Singleton support.
+
 
 class Database:
     r"""
@@ -199,27 +148,25 @@ penalty. Example:
 
     __handleCache = {}
 
-    def __init__(self, server, dbFile, password=None):
+    def __init__(self, server, db_path, password=None):
         """Set the db handle, either from cache or via the COM connection."""
-        cacheKey = ( server.lower(), dbFile.lower() )
-        cachedHandle = self.__handleCache.get(cacheKey)
-        if cachedHandle:
-            self.__handle = cachedHandle
+        cache_key = (server.lower(), db_path.lower())
+        cached_handle = self.__handleCache.get(cache_key)
+        if cached_handle:
+            self.__handle = cached_handle
         else:
             try:
                 s = Session(password)
-                self.__handle = s.GetDatabase(server, dbFile)
-                if self.__handle.IsOpen: # Make sure everything's okay.
-                    self.__handleCache[cacheKey] = self.__handle # Cache the handle
+                self.__handle = s.GetDatabase(server, db_path)
+                if self.__handle.IsOpen:  # Make sure everything's okay.
+                    self.__handleCache[cache_key] = self.__handle  # Cache the handle
             except:
-                raise DatabaseError(self.__DB_ERROR % (server, dbFile))
+                raise DatabaseError(self.__DB_ERROR % (server, db_path))
 
     def __getattr__(self, name):
         """Delegate to the Notes object to support all properties and methods."""
         return getattr(self.__handle, name)
 
-# end class Database
-# -------------------------------------------------------------------
 
 class ACL:
     r"""
@@ -261,15 +208,15 @@ Example:
     Randy Reader
     """
 
-    def __init__(self, server, dbFile, password=None):
+    def __init__(self, server, db_path, password=None):
         """Set the ACL handle, and retrieve the ACL entries."""
         self.__entries = []
-        db = Database(server, dbFile, password)
+        db = Database(server, db_path, password)
         self.__handle = db.ACL
-        nextEntry = self.__handle.GetFirstEntry()
-        while nextEntry:
-            self.__entries.append( ACLEntry(nextEntry) )
-            nextEntry = self.__handle.GetNextEntry(nextEntry)
+        next_entry = self.__handle.GetFirstEntry()
+        while next_entry:
+            self.__entries.append(ACLEntry(next_entry))
+            next_entry = self.__handle.GetNextEntry(next_entry)
         self.__entries.sort()
 
     def getAllEntries(self):
@@ -287,8 +234,6 @@ Example:
             s += "%s\n" % entry
         return s
 
-# end class ACL
-# -------------------------------------------------------------------
 
 class ACLEntry:
     r"""
@@ -332,13 +277,13 @@ Example:
 
     __LEVELS = ["No Access", "Depositor", "Reader", "Author", "Editor", "Designer", "Manager"]
 
-    def __init__(self, notesACLEntry):
+    def __init__(self, notes_acl_entry):
         """The parameter is a LotusScript NotesACLEntry object."""
-        self.__handle = notesACLEntry
-        self.__name = notesACLEntry.Name
-        self.__level = self.__LEVELS[notesACLEntry.Level]
-        self.__loadRoles(notesACLEntry)
-        self.__loadFlags(notesACLEntry)
+        self.__handle = notes_acl_entry
+        self.__name = notes_acl_entry.Name
+        self.__level = self.__LEVELS[notes_acl_entry.Level]
+        self.__loadRoles(notes_acl_entry)
+        self.__loadFlags(notes_acl_entry)
 
     def getName(self):
         """Returns the ACLEntry Name."""
@@ -394,7 +339,7 @@ Example:
 
     def __str__(self):
         """For printing"""
-        s = "Name : %s\nLevel: %s\n" % ( self.getName(), self.getLevel() )
+        s = "Name : %s\nLevel: %s\n" % (self.getName(), self.getLevel())
         if self.getRoles():
             for role in self.getRoles():
                 s += "Role : %s\n" % role
@@ -402,33 +347,7 @@ Example:
             s += "Role : No roles\n"
         if self.getFlags():
             for flag in self.getFlags():
-                s +=  "Flag : %s\n" % flag
+                s += "Flag : %s\n" % flag
         else:
             s += "Flag : No flags\n"
         return s
-
-# end class ACLEntry
-# -------------------------------------------------------------------
-
-def test():
-    testServer = ""
-    testDB = "cache.ndk"
-
-    print("Testing Session")
-    s = Session()
-    print(s.CommonUserName)
-
-    print("Testing Database")
-    db = Database(testServer, testDB)
-    print(db.Created)
-
-    print("Testing ACL")
-    acl = ACL(testServer, testDB)
-    print(acl.Roles)
-
-    print("Testing the full ACL print")
-    print(acl)
-
-if __name__ == "__main__":
-    test()
-

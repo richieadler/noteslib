@@ -1,25 +1,27 @@
 [build-system]
-requires = ["flit"]
-build-backend = "flit.buildapi"
+requires = ["hatchling"]
+build-backend = "hatchling.build"
 
-[tool.flit.metadata]
-module = "noteslib"
-author = "Robert Follek"
-author-email = "bfollek@gmail.com"
-maintainer = "Marcelo Huerta"
-maintainer-email = "richieadler@gmail.com"
-description-file = "README.md"
-requires-python = "~=3.0"
-requires = [
+[project]
+name = "noteslib"
+authors = [{name="Robert Follek", email="bfollek@gmail.com"}]
+maintainers = [{name="Marcelo Huerta", email="richieadler@gmail.com"}]
+readme = "README.md"
+dynamic = ["version", "description"]
+requires-python = ">=3.8"
+license = "MIT"
+dependencies = [
 	"pywin32",
 ]
 classifiers = [
-	"Development Status :: 5 - Production/Stable",
+	"Development Status :: 4 - Beta",
 	"Environment :: Win32 (MS Windows)",
 	"Intended Audience :: Developers",
-	"License :: OSI Approved :: MIT License",
 	"Operating System :: Microsoft :: Windows",
 	"Programming Language :: Python :: 3 :: Only",
 	"Topic :: Database",
 	"Topic :: Software Development :: Libraries :: Python Modules",
 ]
+
+[tool.hatch.version]
+path = "src/noteslib/__init__.py"
