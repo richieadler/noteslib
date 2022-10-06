@@ -32,9 +32,10 @@ python = "D:/Prog/Python310-32/python.exe"
 dependencies = [
 	"lxml",
 	"pytest",
-	"pytest-cov"
+	"pytest-cov",
+	"wmi",
 ]
 
 [tool.hatch.envs.test.scripts]
 test = "pytest --cov=src/noteslib --cov-report=term-missing tests"
-
+test-v = "pytest -vv --cov=src/noteslib --cov-report=term-missing tests"
