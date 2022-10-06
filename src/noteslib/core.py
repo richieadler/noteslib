@@ -163,6 +163,10 @@ penalty. Example:
             except:
                 raise DatabaseError(self.__DB_ERROR % (server, db_path))
 
+    def __eq__(self, other):
+        """Two databases are equal if they point to the same NotesDatabase object"""
+        return self.__handle == other.__handle
+
     def __getattr__(self, name):
         """Delegate to the Notes object to support all properties and methods."""
         return getattr(self.__handle, name)
