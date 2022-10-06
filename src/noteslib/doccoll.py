@@ -1,3 +1,5 @@
+from noteslib.doc import Document
+
 
 class DocumentCollection:
     """Pythonic version of NotesDocumentCollection"""
@@ -13,20 +15,20 @@ class DocumentCollection:
         if not isinstance(item, int):
             raise IndexError(f"{self.__class__.__name__} indices must be integers")
         ix = (item % self.__handle.Count) + 1
-        return self.__handle.GetNthDocument(ix)
+        return Document(self.__handle.GetNthDocument(ix))
 
     def __iter__(self):
         coll = self.__handle
         doc = coll.GetFirstDocument()
         while doc:
-            yield doc
+            yield Document(doc)
             doc = coll.GetNextDocument(doc)
 
     def __reversed__(self):
         coll = self.__handle
         doc = coll.GetLastDocument()
         while doc:
-            yield doc
+            yield Document(doc)
             doc = coll.GetPrevDocument(doc)
 
     def __getattr__(self, name):

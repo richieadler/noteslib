@@ -37,6 +37,7 @@ dependencies = [
 	"lxml",
 	"pytest",
 	"pytest-cov",
+	"pytest-check",
 	"wmi",
 ]
 
