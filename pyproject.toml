@@ -18,7 +18,11 @@ classifiers = [
 	"Environment :: Win32 (MS Windows)",
 	"Intended Audience :: Developers",
 	"Operating System :: Microsoft :: Windows",
-	"Programming Language :: Python :: 3 :: Only",
+	"Programming Language :: Python :: 3.8",
+	"Programming Language :: Python :: 3.9",
+	"Programming Language :: Python :: 3.10",
+	"Programming Language :: Python :: 3.11",
+	"Programming Language :: Python :: 3.12",
 	"Topic :: Database",
 	"Topic :: Software Development :: Libraries :: Python Modules",
 ]
@@ -28,7 +32,7 @@ path = "src/noteslib/__init__.py"
 
 [tool.hatch.envs.test]
 platforms = ["windows"]
-python = "D:/Prog/Python310-32/python.exe"
+python = "D:/Prog/Python38-32/python.exe"
 dependencies = [
 	"lxml",
 	"pytest",
