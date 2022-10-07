@@ -135,9 +135,7 @@ def load_notes_db():
         doc.ReplaceItemValue('$TITLE', title + chr(10) + '#2noteslib_test')
         doc.Save(1, 0, 1)
         del doc
-
     yield ns, db
-
     del ns, db
 
 

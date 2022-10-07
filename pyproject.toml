@@ -52,6 +52,7 @@ dependencies = [
 	"black",
 	"isort",
 	"pylint",
+	"mypy",
 ]
 
 [tool.hatch.envs.lint.scripts]
@@ -59,7 +60,15 @@ check = [
 	"- isort --check-only --diff src",
 	"- pylint src",
 	"- black --check --diff src",
+	"- mypy src"
 ]
 
 [tool.pylint]
 good-names = "s,nc,db,ix"
+
+[[tool.mypy.overrides]]
+
+module = [
+	"win32com.*",
+]
+ignore_missing_imports = true

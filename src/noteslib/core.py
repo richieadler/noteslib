@@ -306,8 +306,7 @@ class ACLEntry:
 
     @property
     def roles(self):
-        """Returns a list of the ACLEntry roles, sorted alphabetically."""
-        # return self.__roles
+        """Returns a list of the ACLEntry roles."""
         return list(self.__handle.Roles)
 
     def _load_flags(self, acl_entry):
