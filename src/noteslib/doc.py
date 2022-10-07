@@ -2,8 +2,7 @@ from .enums import ITEMTYPE
 
 
 class Document:
-    """Wrapper for NotesDocument with "pythonic" syntax
-    """
+    """Wrapper for NotesDocument with "pythonic" syntax"""
 
     def __init__(self, doc):
         self.__handle = doc
@@ -12,8 +11,8 @@ class Document:
         docself = self.__handle
         docother = other.__handle
         return (
-            docself.ParentDatabase.ReplicaID == docother.ParentDatabase.ReplicaID and
-            docself.UniversalID == docother.UniversalID
+            docself.ParentDatabase.ReplicaID == docother.ParentDatabase.ReplicaID
+            and docself.UniversalID == docother.UniversalID
         )
 
     def __getitem__(self, name):
@@ -31,9 +30,10 @@ class Document:
         """Delegate to the Notes object to support all properties and methods."""
         return getattr(self.__handle, name)
 
-    def _get(self, item):
-        """Return value according to type and other considerations
-        """
+    @staticmethod
+    def _get(item):
+        """Return value according to type and other considerations"""
+
         if item.Type == ITEMTYPE.RICHTEXT:
             return item.Text
         return item.Values

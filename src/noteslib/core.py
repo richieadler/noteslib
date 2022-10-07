@@ -1,63 +1,63 @@
-
 import win32com.client
 
+from noteslib.enums import ACLLEVEL
 from noteslib.exceptions import DatabaseError, SessionError
 
 
 class Session:
     r"""
-The Session class creates an COM connection to Notes. It supports all
-the properties and methods of the LotusScript NotesSession class, using
-the same syntax.
+    The Session class creates an COM connection to Notes. It supports all
+    the properties and methods of the LotusScript NotesSession class, using
+    the same syntax.
 
-To create a Session object:
+    To create a Session object:
 
-    s = noteslib.Session(password)
+        s = noteslib.Session(password)
 
-or
+    or
 
-    s = noteslib.Session()
+        s = noteslib.Session()
 
-The password is optional; if you don't provide it, Notes will prompt you
-for a password.
+    The password is optional; if you don't provide it, Notes will prompt you
+    for a password.
 
-Example:
+    Example:
 
-    >>> import noteslib
-    >>> s = noteslib.Session("password")
-    >>> s.NotesBuildVersion
-    166
-    >>> s.GetEnvironmentString("Directory", -1)
-    'd:\\notes5.8\\Data'
-    >>>
+        >>> import noteslib
+        >>> s = noteslib.Session("password")
+        >>> s.NotesBuildVersion
+        166
+        >>> s.GetEnvironmentString("Directory", -1)
+        'd:\\notes5.8\\Data'
+        >>>
 
-Session is a singleton - multiple Session variables share one Session
-object. You can instantiate Sessions as needed without a performance
-penalty, and you only have to establish a password once. Example:
+    Session is a singleton - multiple Session variables share one Session
+    object. You can instantiate Sessions as needed without a performance
+    penalty, and you only have to establish a password once. Example:
 
-    >>> a = noteslib.Session(password)
-    >>> id(a)
-    8429868
-    >>> b = noteslib.Session()
-    >>> id(b)
-    8429868
+        >>> a = noteslib.Session(password)
+        >>> id(a)
+        8429868
+        >>> b = noteslib.Session()
+        >>> id(b)
+        8429868
     """
-################################################
-# SINGLETON - Implementation Details
-#
-# 1) The __call__ method in the Session class ensures that function-style
-# calls of a Session instance return the instance.
-#
-# 2) The line "Session = Session()" that immediately follows the Session class definition
-# creates an instance of the Session class and rebinds the name "Session" to it.
-#
-# With these pieces in place, any assignment like "s = Session()" returns the same
-# Session instance. This gives us the singleton we want.
-#
-# The attempt to connect to Notes is in Session.__call__ rather than Session.__init__
-# so that we don't try to connect when the "Session = Session()" line executes.
-# Otherwise, "import noteslib" might try to connect, fail, and raise an exception.
-################################################
+    ################################################
+    # SINGLETON - Implementation Details
+    #
+    # 1) The __call__ method in the Session class ensures that function-style
+    # calls of a Session instance return the instance.
+    #
+    # 2) The line "Session = Session()" that immediately follows the Session class definition
+    # creates an instance of the Session class and rebinds the name "Session" to it.
+    #
+    # With these pieces in place, any assignment like "s = Session()" returns the same
+    # Session instance. This gives us the singleton we want.
+    #
+    # The attempt to connect to Notes is in Session.__call__ rather than Session.__init__
+    # so that we don't try to connect when the "Session = Session()" line executes.
+    # Otherwise, "import noteslib" might try to connect, fail, and raise an exception.
+    ################################################
 
     __CONNECT_ERROR = r"""
 
@@ -94,46 +94,46 @@ Session = Session()  # Singleton support.
 
 class Database:
     r"""
-The Database class creates an COM connection to a Notes database. It
-supports all the properties and methods of the LotusScript NotesDatabase
-class, using the same syntax.
+    The Database class creates an COM connection to a Notes database. It
+    supports all the properties and methods of the LotusScript NotesDatabase
+    class, using the same syntax.
 
-You don't have to create a Session first. A Database object creates its own
-Session automatically.
+    You don't have to create a Session first. A Database object creates its own
+    Session automatically.
 
-To create a Database object:
+    To create a Database object:
 
-    db = noteslib.Database(server, database_file, password)
+        db = noteslib.Database(server, database_file, password)
 
-or
+    or
 
-    db = noteslib.Database(server, database_file)
+        db = noteslib.Database(server, database_file)
 
-Example:
+    Example:
 
-    >>> import noteslib
-    >>> db = noteslib.Database("NYNotes1", "ACLTest.nsf", "password")
-    >>> db.Created
-    pywintypes.datetime(2001, 6, 30, 11, 12, 40, tzinfo=TimeZoneInfo('GMT Standard Time', True))
+        >>> import noteslib
+        >>> db = noteslib.Database("NYNotes1", "ACLTest.nsf", "password")
+        >>> db.Created
+        pywintypes.datetime(2001, 6, 30, 11, 12, 40, tzinfo=TimeZoneInfo('GMT Standard Time', True))
 
-Multiple Database objects created for the same database are unique objects,
-but they share the same handle to the underlying NotesDatabase object.
-You can instantiate Database objects as needed without a performance
-penalty. Example:
+    Multiple Database objects created for the same database are unique objects,
+    but they share the same handle to the underlying NotesDatabase object.
+    You can instantiate Database objects as needed without a performance
+    penalty. Example:
 
-    >>> a = noteslib.Database("NYNotes1", "ACLTest.nsf", "password")
-    >>> id(a)
-    15281724
-    >>> id(a._Database__handle)
-    15286172
-    >>> b = noteslib.Database("NYNotes1", "ACLTest.nsf")
-    >>> id(b)
-    15270044
-    >>> id(b._Database__handle)
-    15286172
+        >>> a = noteslib.Database("NYNotes1", "ACLTest.nsf", "password")
+        >>> id(a)
+        15281724
+        >>> id(a._Database__handle)
+        15286172
+        >>> b = noteslib.Database("NYNotes1", "ACLTest.nsf")
+        >>> id(b)
+        15270044
+        >>> id(b._Database__handle)
+        15286172
 
-    a and b are different objects, but they share the same internal
-    NotesDatabase object via the __handle variable.
+        a and b are different objects, but they share the same internal
+        NotesDatabase object via the __handle variable.
     """
 
     __DB_ERROR = r"""
@@ -172,42 +172,42 @@ penalty. Example:
 
 class ACL:
     r"""
-The ACL class encapsulates a Notes database ACL. It supports all the
-properties and methods of the LotusScript NotesACL class, using the same
-syntax.
+    The ACL class encapsulates a Notes database ACL. It supports all the
+    properties and methods of the LotusScript NotesACL class, using the same
+    syntax.
 
-Additional features:
-* You can print an ACL object. It knows how to format itself reasonably.
-* getAllEntries() method - Returns the ACL contents as a list of ACLEntry
-    objects, sorted by Name.
+    Additional features:
+    * You can print an ACL object. It knows how to format itself reasonably.
+    * getAllEntries() method - Returns the ACL contents as a list of ACLEntry
+        objects, sorted by Name.
 
-You don't have to create Session or Database objects first. An ACL object
-creates its own Session and Database objects automatically.
+    You don't have to create Session or Database objects first. An ACL object
+    creates its own Session and Database objects automatically.
 
-To create an ACL object:
+    To create an ACL object:
 
-    acl = noteslib.ACL(server, database_file, password)
+        acl = noteslib.ACL(server, database_file, password)
 
-or
+    or
 
-    acl = noteslib.ACL(server, database_file)
+        acl = noteslib.ACL(server, database_file)
 
-Example:
+    Example:
 
-    >>> import noteslib
-    >>> acl = noteslib.ACL("NYNotes1", "ACLTest.nsf", "password")
-    >>> for entry in acl.getAllEntries():
-    ...     print (entry.name())
-    ...
-    -Default-
-    Alice Author
-    Anonymous
-    bob
-    Dave Depositor
-    Donna Designer
-    LocalDomainServers
-    OtherDomainServers
-    Randy Reader
+        >>> import noteslib
+        >>> acl = noteslib.ACL("NYNotes1", "ACLTest.nsf", "password")
+        >>> for entry in acl.getAllEntries():
+        ...     print (entry.name())
+        ...
+        -Default-
+        Alice Author
+        Anonymous
+        bob
+        Dave Depositor
+        Donna Designer
+        LocalDomainServers
+        OtherDomainServers
+        Randy Reader
     """
 
     def __init__(self, server, db_path, password=None):
@@ -239,52 +239,48 @@ Example:
 
 class ACLEntry:
     r"""
-The ACLEntry class encapsulates a Notes database ACL entry. It supports
-all the properties and methods of the LotusScript NotesACLEntry class,
-using the same syntax.
+    The ACLEntry class encapsulates a Notes database ACL entry. It supports
+    all the properties and methods of the LotusScript NotesACLEntry class,
+    using the same syntax.
 
-Additional features:
-* You can print an ACLEntry object. It knows how to format itself reasonably.
-* getName() method - Returns the entry name.
-* getLevel() method - Returns the entry level.
-* getRoles() method - Returns a list of entry roles, sorted alphabetically.
-* getFlags() method - Returns a list of the ACLEntry flags, translated to
-    strings.
-These methods avoid the obvious names, e.g. getName() instead of name(),
-to avoid conflict with the existing NotesACLEntry properties.
+    Additional features:
+    * You can print an ACLEntry object. It knows how to format itself reasonably.
+    * getName() method - Returns the entry name.
+    * getLevel() method - Returns the entry level.
+    * getRoles() method - Returns a list of entry roles, sorted alphabetically.
+    * getFlags() method - Returns a list of the ACLEntry flags, translated to
+        strings.
+    These methods avoid the obvious names, e.g. getName() instead of name(),
+    to avoid conflict with the existing NotesACLEntry properties.
 
-Normally, you won't create an ACLEntry object directly. Instead, you can
-retrieve a list of ACLEntry objects from an ACL object, via its
-getAllEntries() method.
+    Normally, you won't create an ACLEntry object directly. Instead, you can
+    retrieve a list of ACLEntry objects from an ACL object, via its
+    getAllEntries() method.
 
-Example:
+    Example:
 
-    >>> import noteslib
-    >>> acl = noteslib.ACL("NYNotes1", "ACLTest.nsf", "password")
-    >>> print (acl.getAllEntries()[3])
-    Name : bob
-    Level: Manager
-    Role : [Role1]
-    Role : [Role2]
-    Role : [Role3]
-    Flag : Create Documents
-    Flag : Delete Documents
-    Flag : Create Personal Agents
-    Flag : Create Personal Folders/Views
-    Flag : Create Shared Folders/Views
-    Flag : Create LotusScript/Java Agent
-    Flag : Read Public Documents
-    Flag : Write Public Documents
+        >>> import noteslib
+        >>> acl = noteslib.ACL("NYNotes1", "ACLTest.nsf", "password")
+        >>> print (acl.getAllEntries()[3])
+        Name : bob
+        Level: Manager
+        Role : [Role1]
+        Role : [Role2]
+        Role : [Role3]
+        Flag : Create Documents
+        Flag : Delete Documents
+        Flag : Create Personal Agents
+        Flag : Create Personal Folders/Views
+        Flag : Create Shared Folders/Views
+        Flag : Create LotusScript/Java Agent
+        Flag : Read Public Documents
+        Flag : Write Public Documents
     """
-
-    __LEVELS = ["No Access", "Depositor", "Reader", "Author", "Editor", "Designer", "Manager"]
 
     def __init__(self, notes_acl_entry):
         """The parameter is a LotusScript NotesACLEntry object."""
         self.__handle = notes_acl_entry
-        self.__name = notes_acl_entry.Name
-        self.__level = self.__LEVELS[notes_acl_entry.Level]
-        self._load_roles(notes_acl_entry)
+        self.__level = ACLLEVEL(notes_acl_entry.Level)
         self._load_flags(notes_acl_entry)
 
     @property
@@ -292,17 +288,20 @@ Example:
         """Returns the ACLEntry Name."""
         return self.__handle.Name
 
-    def getLevel(self):
+    @property
+    def level(self):
         """Returns the ACLEntry Level, translated to a string."""
-        return self.__level
+        return str(self.__level.name).title()
 
     def getFlags(self):
         """Returns a list of the ACLEntry flags, translated to strings."""
         return self.__flags
 
-    def getRoles(self):
+    @property
+    def roles(self):
         """Returns a list of the ACLEntry roles, sorted alphabetically."""
-        return self.__roles
+        # return self.__roles
+        return list(self.__handle.Roles)
 
     def _load_flags(self, acl_entry):
         """Translate the entry's flags into a list of strings."""
@@ -324,17 +323,9 @@ Example:
         if acl_entry.IsPublicWriter:
             self.__flags.append("Write Public Documents")
 
-    def _load_roles(self, acl_entry):
-        """Load the entry's roles into a sorted list."""
-        roles = acl_entry.Roles
-        if roles:
-            self.__roles = sorted(roles)
-        else:
-            self.__roles = []
-
     def __lt__(self, other):
         """For sorting: compare on name."""
-        return self.__name.lower() < other.__name.lower()
+        return self.name.casefold() < other.name.casefold()
 
     def __getattr__(self, name):
         """Delegate to the Notes object to support all properties and methods."""
@@ -342,12 +333,13 @@ Example:
 
     def __str__(self):
         """For printing"""
-        s = f"Name : {self.name()}\nLevel: {self.getLevel()}\n"
-        if self.getRoles():
-            for role in self.getRoles():
-                s += f"Role : {role}\n"
-        else:
-            s += "Role : No roles\n"
+        s = f"Name : {self.name}\nLevel: {self.level}\n"
+        # if self.roles:
+        #     for role in self.roles:
+        #         s += f"Role : {role}\n"
+        # else:
+        #     s += "Role : No roles\n"
+        s += f"Roles: {self.roles}\n"
         if self.getFlags():
             for flag in self.getFlags():
                 s += f"Flag : {flag}\n"

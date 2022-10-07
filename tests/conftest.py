@@ -26,7 +26,7 @@ def fixview(ns, vw, startcol, endcol):
         db = vw.Parent
         exporter = ns.CreateDXLExporter()
         importer = ns.CreateDXLImporter()
-        importer.DesignImportOption = 5 # DXLIMPORTOPTION_REPLACE_ELSE_IGNORE
+        importer.DesignImportOption = 5  # DXLIMPORTOPTION_REPLACE_ELSE_IGNORE
         parser = etree.XMLParser(remove_blank_text=True)
         docvw = db.GetDocumentByUNID(vw.NotesURL.split('/')[-1].split('?')[0])
         tree = etree.fromstring(exporter.Export(docvw), parser)
@@ -55,7 +55,7 @@ def get_or_create_doc(db, key):
             lcat.append(str(cat))
             ri(ncat, cat)
         ri('Categories', '\\'.join(lcat))
-        doc.Save(1,0,1)
+        doc.Save(1, 0, 1)
     return doc
 
 
@@ -68,14 +68,17 @@ def load_notes_db():
         db = dbdir.CreateDatabase(DBPATH)
         assert db, 'Could not create database'
     acl = db.ACL
+    if "[TestRole]" not in acl.Roles:
+        acl.AddRole("TestRole")
     acle = acl.GetEntry('-Default-')
     if not acle:
-        acl.CreateACLEntry('-Default-', 6)
-        acl.Save()
+        acle = acl.CreateACLEntry('-Default-', 6)
+    acle.EnableRole("TestRole")
+    acl.Save()
     vw = db.GetView('($All)')
     if not vw:
         vw = db.CreateView("($All)", '', None, True)
-        for i in range(1,4):
+        for i in range(1, 4):
             cat = f'Category_{i}'
             col = vw.CreateColumn(i, cat, cat)
             col.IsSorted = True
@@ -84,35 +87,35 @@ def load_notes_db():
         col.Width = 10
         col = vw.CreateColumn(5, "UNID", "@Text(@DocumentUniqueID)")
         col.Width = 32
-    vwC = db.GetView('CatView')
-    if not vwC:
-        vwC = db.CreateView("CatView", None, vw, False)
-        col = vwC.CreateColumn(1, " ", "IconValue")
-    vwC.SelectionFormula = vw.SelectionFormula
-    for i in range(0,4):
-        col = vwC.Columns[i]
+    vw1 = db.GetView('CatView')
+    if not vw1:
+        vw1 = db.CreateView("CatView", None, vw, False)
+        vw1.CreateColumn(1, " ", "IconValue")
+    vw1.SelectionFormula = vw.SelectionFormula
+    for i in range(0, 4):
+        col = vw1.Columns[i]
         col.Width = 1
         col.Title = ''
-    fixview(ns, vwC, 1, 4)
-    vwC2 = db.GetView('CatView2')
-    if not vwC2:
-        vwC2 = db.CreateView("CatView2", None, vwC, False)
-        vwC2.RemoveColumn(3)
-        vwC2.RemoveColumn(3)
-        col = vwC2.Columns[1]
+    fixview(ns, vw1, 1, 4)
+    vw2 = db.GetView('CatView2')
+    if not vw2:
+        vw2 = db.CreateView("CatView2", None, vw1, False)
+        vw2.RemoveColumn(3)
+        vw2.RemoveColumn(3)
+        col = vw2.Columns[1]
         col.Formula = "Categories"
         col.Width = 32
-    vwC2.SelectionFormula = vwC.SelectionFormula
-    fixview(ns, vwC2, 1, 2)
+    vw2.SelectionFormula = vw1.SelectionFormula
+    fixview(ns, vw2, 1, 2)
 
     # Specific sets of documents needed
     doc = get_or_create_doc(db, [0, 0, 0])
     doc.ReplaceItemValue('Value', 'First!')
-    doc.Save(1,0,1)
+    doc.Save(1, 0, 1)
     docs = vw.GetAllDocumentsByKey('CatTest', True)
     if docs.Count == 0:
-        for i in range(1,11):
-            for j in range(1,11):
+        for i in range(1, 11):
+            for j in range(1, 11):
                 key = ['CatTest', f'Cat1_{i:02d}', f'Cat2_{j:02d}']
                 doc = get_or_create_doc(db, key)
                 doc.ReplaceItemValue('Value', '-'.join(key))
@@ -147,6 +150,7 @@ def doc0(load_notes_db):
     _, db = load_notes_db
     doc = get_or_create_doc(db, [0, 0, 0])
     yield Document(doc)
+
 
 @pytest.fixture(scope='function')
 def all_docs(load_notes_db):

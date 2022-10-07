@@ -1,37 +1,49 @@
 import enum
 
 
+class ACLLEVEL(enum.IntEnum):
+    """Access level in ACL entries"""
+
+    NOACCESS = 0
+    DEPOSITOR = 1
+    READER = 2
+    AUTHOR = 3
+    EDITOR = 4
+    DESIGNER = 5
+    MANAGER = 6
+
+
 class ITEMTYPE(enum.IntEnum):
     """Item types"""
 
-    ACTIONCD = 16  # means saved action CD records; non-Computable; canonical form.
-    ASSISTANTINFO = 17  # means saved assistant information; non-Computable; canonical form.
-    ATTACHMENT = 1084  # means file attachment.
-    AUTHORS = 1076  # means authors.
+    ACTIONCD = 16  # saved action CD records; non-Computable; canonical form.
+    ASSISTANTINFO = 17  # saved assistant information; non-Computable; canonical form.
+    ATTACHMENT = 1084  # file attachment.
+    AUTHORS = 1076  # authors.
     COLLATION = 2  # new with Release 6.
-    DATETIMES = 1024  # means date-time value or range of date-time values.
-    EMBEDDEDOBJECT = 1090  # means embedded object.
-    ERRORITEM = 256  # means an error occurred while accessing the type.
-    FORMULA = 1536  # means Notes formula.
-    HTML = 21  # means HTML source text.
-    ICON = 6  # means icon.
-    LSOBJECT = 20  # means saved LotusScript Object code for an agent.
-    MIME_PART = 25  # means MIME support.
-    NAMES = 1074  # means names.
-    NOTELINKS = 7  # means link to a database, view, or document.
-    NOTEREFS = 4  # means reference to the parent document.
-    NUMBERS = 768  # means number or number list.
-    OTHEROBJECT = 1085  # means other object.
-    QUERYCD = 15  # means saved query CD records; non-Computable; canonical form.
-    READERS = 1075  # means readers.
-    RFC822TEXT = 1282  # means RFC822 Internet mail text.
-    RICHTEXT = 1  # means rich text.
-    SIGNATURE = 8  # means signature.
-    TEXT = 1280  # means text or text list.
+    DATETIMES = 1024  # date-time value or range of date-time values.
+    EMBEDDEDOBJECT = 1090  # embedded object.
+    ERRORITEM = 256  # an error occurred while accessing the type.
+    FORMULA = 1536  # Notes formula.
+    HTML = 21  # HTML source text.
+    ICON = 6  # icon.
+    LSOBJECT = 20  # saved LotusScript Object code for an agent.
+    MIME_PART = 25  # MIME support.
+    NAMES = 1074  # names.
+    NOTELINKS = 7  # link to a database, view, or document.
+    NOTEREFS = 4  # reference to the parent document.
+    NUMBERS = 768  # number or number list.
+    OTHEROBJECT = 1085  # other object.
+    QUERYCD = 15  # saved query CD records; non-Computable; canonical form.
+    READERS = 1075  # readers.
+    RFC822TEXT = 1282  # RFC822 Internet mail text.
+    RICHTEXT = 1  # rich text.
+    SIGNATURE = 8  # signature.
+    TEXT = 1280  # text or text list.
     TEXTLIST = 1281  # text list.
-    UNAVAILABLE = 512  # means the item type isn't available.
-    UNKNOWN = 0  # means the item type isn't known.
-    USERDATA = 14  # means user data.
-    USERID = 1792  # means user ID name.
-    VIEWMAPDATA = 18  # means saved ViewMap dataset; non-Computable; canonical form.
-    VIEWMAPLAYOUT = 19  # means saved ViewMap layout; non-Computable; canonical form.
+    UNAVAILABLE = 512  # the item type isn't available.
+    UNKNOWN = 0  # the item type isn't known.
+    USERDATA = 14  # user data.
+    USERID = 1792  # user ID name.
+    VIEWMAPDATA = 18  # saved ViewMap dataset; non-Computable; canonical form.
+    VIEWMAPLAYOUT = 19  # saved ViewMap layout; non-Computable; canonical form.
