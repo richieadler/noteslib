@@ -62,6 +62,12 @@ check = [
 	"- black --check --diff src",
 	"- mypy src"
 ]
+fmt = [
+	"isort src",
+	"black src",
+	"- pylint src",
+	"- mypy src",
+]
 
 [tool.pylint]
 good-names = "s,nc,db,ix"
