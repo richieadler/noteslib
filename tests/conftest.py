@@ -118,19 +118,16 @@ def load_notes_db():
                 doc.ReplaceItemValue('Value', '-'.join(key))
                 doc.Save(1, 0, 1)
 
-    # Title
+    # Set title.
+    # Notes can be a little stubborn if you want to set the title programatically
+    # and also add an inheritance value. Three times do the trick.
     title = 'Test DB for noteslib module'
-    doc = db.GetDocumentByID('FFFF0010')
-    doc.ReplaceItemValue('$TITLE', title)
-    doc.Save(1, 0, 1)
-    del doc
-    doc = db.GetDocumentByID('FFFF0010')
-    doc.ReplaceItemValue('$TITLE', title)
-    doc.Save(1, 0, 1)
-    del doc
-    doc = db.GetDocumentByID('FFFF0010')
-    doc.ReplaceItemValue('$TITLE',  title + chr(10) + '#2noteslib_test')
-    doc.Save(1, 0, 1)
+    noteid = 'FFFF0010'
+    for i in range(3):
+        doc = db.GetDocumentByID(noteid)
+        doc.ReplaceItemValue('$TITLE', title + chr(10) + '#2noteslib_test')
+        doc.Save(1, 0, 1)
+        del doc
 
     yield ns, db
 
