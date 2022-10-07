@@ -44,3 +44,19 @@ dependencies = [
 [tool.hatch.envs.test.scripts]
 test = "pytest --cov=src/noteslib --cov-report=term-missing tests"
 test-v = "pytest -vv --cov=src/noteslib --cov-report=term-missing tests"
+
+[tool.hatch.envs.lint]
+platforms = ["windows"]
+python = "D:/Prog/Python38-32/python.exe"
+dependencies = [
+	"black",
+	"isort",
+	"pylint",
+]
+
+[tool.hatch.envs.lint.scripts]
+check = [
+	"isort --check-only --diff src",
+	"pylint src",
+	"black --check --diff src",
+]
