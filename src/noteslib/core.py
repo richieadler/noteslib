@@ -1,9 +1,7 @@
 
 import win32com.client
 
-class NotesLibError(Exception): pass
-class SessionError(NotesLibError): pass
-class DatabaseError(NotesLibError): pass
+from noteslib.exceptions import DatabaseError, SessionError
 
 
 class Session:
@@ -63,7 +61,7 @@ penalty, and you only have to establish a password once. Example:
 
     __CONNECT_ERROR = r"""
 
-    Error connecting to Notes via COM: %s
+    Error connecting to Notes via COM:
     """
 
     def __init__(self):
@@ -78,7 +76,7 @@ penalty, and you only have to establish a password once. Example:
             else:
                 self.__handle.Initialize()
         except Exception as exc:
-            raise SessionError(self.__CONNECT_ERROR % exc)
+            raise SessionError(self.__CONNECT_ERROR) from exc
 
     def __call__(self, password=None):
         """Executes when an instance is invoked as a function. Singleton support."""
@@ -160,8 +158,8 @@ penalty. Example:
                 self.__handle = s.GetDatabase(server, db_path)
                 if self.__handle.IsOpen:  # Make sure everything's okay.
                     self.__handleCache[cache_key] = self.__handle  # Cache the handle
-            except:
-                raise DatabaseError(self.__DB_ERROR % (server, db_path))
+            except Exception as exc:
+                raise DatabaseError(self.__DB_ERROR % (server, db_path)) from exc
 
     def __eq__(self, other):
         """Two databases are equal if they point to the same NotesDatabase object"""
@@ -235,7 +233,7 @@ Example:
         """For printing"""
         s = ""
         for entry in self.getAllEntries():
-            s += "%s\n" % entry
+            s += f"{entry}\n"
         return s
 
 
@@ -286,8 +284,8 @@ Example:
         self.__handle = notes_acl_entry
         self.__name = notes_acl_entry.Name
         self.__level = self.__LEVELS[notes_acl_entry.Level]
-        self.__loadRoles(notes_acl_entry)
-        self.__loadFlags(notes_acl_entry)
+        self._load_roles(notes_acl_entry)
+        self._load_flags(notes_acl_entry)
 
     def getName(self):
         """Returns the ACLEntry Name."""
@@ -305,29 +303,29 @@ Example:
         """Returns a list of the ACLEntry roles, sorted alphabetically."""
         return self.__roles
 
-    def __loadFlags(self, notesACLEntry):
+    def _load_flags(self, acl_entry):
         """Translate the entry's flags into a list of strings."""
         self.__flags = []
-        if notesACLEntry.CanCreateDocuments:
+        if acl_entry.CanCreateDocuments:
             self.__flags.append("Create Documents")
-        if notesACLEntry.CanDeleteDocuments:
+        if acl_entry.CanDeleteDocuments:
             self.__flags.append("Delete Documents")
-        if notesACLEntry.CanCreatePersonalAgent:
+        if acl_entry.CanCreatePersonalAgent:
             self.__flags.append("Create Personal Agents")
-        if notesACLEntry.CanCreatePersonalFolder:
+        if acl_entry.CanCreatePersonalFolder:
             self.__flags.append("Create Personal Folders/Views")
-        if notesACLEntry.CanCreateSharedFolder:
+        if acl_entry.CanCreateSharedFolder:
             self.__flags.append("Create Shared Folders/Views")
-        if notesACLEntry.CanCreateLSOrJavaAgent:
+        if acl_entry.CanCreateLSOrJavaAgent:
             self.__flags.append("Create LotusScript/Java Agent")
-        if notesACLEntry.IsPublicReader:
+        if acl_entry.IsPublicReader:
             self.__flags.append("Read Public Documents")
-        if notesACLEntry.IsPublicWriter:
+        if acl_entry.IsPublicWriter:
             self.__flags.append("Write Public Documents")
 
-    def __loadRoles(self, notesACLEntry):
+    def _load_roles(self, acl_entry):
         """Load the entry's roles into a sorted list."""
-        roles = notesACLEntry.Roles
+        roles = acl_entry.Roles
         if roles:
             self.__roles = sorted(roles)
         else:
@@ -343,15 +341,15 @@ Example:
 
     def __str__(self):
         """For printing"""
-        s = "Name : %s\nLevel: %s\n" % (self.getName(), self.getLevel())
+        s = f"Name : {self.getName()}\nLevel: {self.getLevel()}\n"
         if self.getRoles():
             for role in self.getRoles():
-                s += "Role : %s\n" % role
+                s += f"Role : {role}\n"
         else:
             s += "Role : No roles\n"
         if self.getFlags():
             for flag in self.getFlags():
-                s += "Flag : %s\n" % flag
+                s += f"Flag : {flag}\n"
         else:
             s += "Flag : No flags\n"
         return s

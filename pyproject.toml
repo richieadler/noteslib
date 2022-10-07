@@ -60,3 +60,6 @@ check = [
 	"pylint src",
 	"black --check --diff src",
 ]
+
+[tool.pylint]
+good-names = "s,nc,db,ix"
