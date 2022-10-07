@@ -1,3 +1,9 @@
+"""
+Main classes to interact with Notes, and other useful classes available in the initial version of NotesLib
+"""
+
+from typing import Any, Dict
+
 import win32com.client
 
 from noteslib.enums import ACLFLAGS, ACLLEVEL, ACLTYPE
@@ -31,43 +37,20 @@ class Session:
         'd:\\notes5.8\\Data'
         >>>
 
-    Session is a singleton - multiple Session variables share one Session
-    object. You can instantiate Sessions as needed without a performance
-    penalty, and you only have to establish a password once. Example:
-
-        >>> a = noteslib.Session(password)
-        >>> id(a)
-        8429868
-        >>> b = noteslib.Session()
-        >>> id(b)
-        8429868
-    """
-    ################################################
-    # SINGLETON - Implementation Details
-    #
-    # 1) The __call__ method in the Session class ensures that function-style
-    # calls of a Session instance return the instance.
-    #
-    # 2) The line "Session = Session()" that immediately follows the Session class definition
-    # creates an instance of the Session class and rebinds the name "Session" to it.
-    #
-    # With these pieces in place, any assignment like "s = Session()" returns the same
-    # Session instance. This gives us the singleton we want.
-    #
-    # The attempt to connect to Notes is in Session.__call__ rather than Session.__init__
-    # so that we don't try to connect when the "Session = Session()" line executes.
-    # Otherwise, "import noteslib" might try to connect, fail, and raise an exception.
-    ################################################
-
-    __CONNECT_ERROR = r"""
-
-    Error connecting to Notes via COM:
+    Session is a Borg - multiple Session instances share status.
+    You can instantiate Sessions as needed without a performance penalty
+    nor errors derived of being different NotesSession objects underneath,
+    and you only have to establish a password once.
     """
 
-    def __init__(self):
-        self.__handle = None
+    _shared_state: Dict[str, Any] = {}
 
-    def __connect_to_notes(self, password=None):
+    def __init__(self, password=None):
+        self.__dict__ = self._shared_state
+        if self.__dict__.get("__handle") is None:
+            self._connect_to_notes(password)
+
+    def _connect_to_notes(self, password=None):
         """Connect to Notes via COM."""
         try:
             self.__handle = win32com.client.Dispatch("Lotus.NotesSession")
@@ -76,20 +59,19 @@ class Session:
             else:
                 self.__handle.Initialize()
         except Exception as exc:
-            raise SessionError(self.__CONNECT_ERROR) from exc
+            raise SessionError() from exc
 
-    def __call__(self, password=None):
-        """Executes when an instance is invoked as a function. Singleton support."""
-        if not self.__handle:
-            self.__connect_to_notes(password)
-        return self
+    def __eq__(self, other):
+        return self.notesobj == other.notesobj
 
     def __getattr__(self, name):
         """Delegate to the Notes object to support all properties and methods."""
         return getattr(self.__handle, name)
 
-
-Session = Session()  # Singleton support.
+    @property
+    def notesobj(self):
+        """Return the underlying NotesSession COM object"""
+        return self.__handle
 
 
 class Database:
@@ -144,7 +126,7 @@ class Database:
     read access to the database.
     """
 
-    __handleCache = {}
+    __handleCache: Dict[tuple, Any] = {}
 
     def __init__(self, server, db_path, password=None):
         """Set the db handle, either from cache or via the COM connection."""
@@ -298,11 +280,10 @@ class ACLEntry:
     @property
     def flags(self):
         """Returns a list of the ACLEntry flags, translated to strings."""
-        v = [
+        return [
             _.replace("_", " ").title()
             for _ in str(self.__flags).split(".")[1].split("|")
         ]
-        return v
 
     @property
     def roles(self):

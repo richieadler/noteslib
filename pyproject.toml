@@ -65,12 +65,11 @@ check = [
 fmt = [
 	"isort src",
 	"black src",
-	"- pylint src",
-	"- mypy src",
 ]
 
 [tool.pylint]
 good-names = "s,nc,db,ix"
+max-line-length = 120
 
 [[tool.mypy.overrides]]
 

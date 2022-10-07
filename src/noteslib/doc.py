@@ -1,3 +1,9 @@
+"""
+Document - wrapper around a NotesDocument.
+
+TODO: Date conversions from NotesDateTime to datetime.datetime (NOT pywintime.datetime)
+"""
+
 from .enums import ITEMTYPE
 
 

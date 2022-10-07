@@ -1,3 +1,7 @@
+"""
+DocumentCollection: Wrapper object for NotesDocumentCollection, but iterable (even reversed)
+and with access by index to their elements.
+"""
 from noteslib.doc import Document
 
 
