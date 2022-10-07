@@ -1,6 +1,6 @@
 import win32com.client
 
-from noteslib.enums import ACLLEVEL
+from noteslib.enums import ACLFLAGS, ACLLEVEL, ACLTYPE
 from noteslib.exceptions import DatabaseError, SessionError
 
 
@@ -163,11 +163,15 @@ class Database:
 
     def __eq__(self, other):
         """Two databases are equal if they point to the same NotesDatabase object"""
-        return self.__handle == other.__handle
+        return self.notesobj == other.notesobj
 
     def __getattr__(self, name):
         """Delegate to the Notes object to support all properties and methods."""
         return getattr(self.__handle, name)
+
+    @property
+    def notesobj(self):
+        return self.__handle
 
 
 class ACL:
@@ -245,13 +249,6 @@ class ACLEntry:
 
     Additional features:
     * You can print an ACLEntry object. It knows how to format itself reasonably.
-    * getName() method - Returns the entry name.
-    * getLevel() method - Returns the entry level.
-    * getRoles() method - Returns a list of entry roles, sorted alphabetically.
-    * getFlags() method - Returns a list of the ACLEntry flags, translated to
-        strings.
-    These methods avoid the obvious names, e.g. getName() instead of name(),
-    to avoid conflict with the existing NotesACLEntry properties.
 
     Normally, you won't create an ACLEntry object directly. Instead, you can
     retrieve a list of ACLEntry objects from an ACL object, via its
@@ -281,6 +278,7 @@ class ACLEntry:
         """The parameter is a LotusScript NotesACLEntry object."""
         self.__handle = notes_acl_entry
         self.__level = ACLLEVEL(notes_acl_entry.Level)
+        self.__type = ACLTYPE(notes_acl_entry.UserType)
         self._load_flags(notes_acl_entry)
 
     @property
@@ -293,9 +291,18 @@ class ACLEntry:
         """Returns the ACLEntry Level, translated to a string."""
         return str(self.__level.name).title()
 
-    def getFlags(self):
+    @property
+    def type(self):
+        return str(self.__type.name).title()
+
+    @property
+    def flags(self):
         """Returns a list of the ACLEntry flags, translated to strings."""
-        return self.__flags
+        v = [
+            _.replace("_", " ").title()
+            for _ in str(self.__flags).split(".")[1].split("|")
+        ]
+        return v
 
     @property
     def roles(self):
@@ -305,23 +312,21 @@ class ACLEntry:
 
     def _load_flags(self, acl_entry):
         """Translate the entry's flags into a list of strings."""
-        self.__flags = []
-        if acl_entry.CanCreateDocuments:
-            self.__flags.append("Create Documents")
-        if acl_entry.CanDeleteDocuments:
-            self.__flags.append("Delete Documents")
-        if acl_entry.CanCreatePersonalAgent:
-            self.__flags.append("Create Personal Agents")
-        if acl_entry.CanCreatePersonalFolder:
-            self.__flags.append("Create Personal Folders/Views")
-        if acl_entry.CanCreateSharedFolder:
-            self.__flags.append("Create Shared Folders/Views")
-        if acl_entry.CanCreateLSOrJavaAgent:
-            self.__flags.append("Create LotusScript/Java Agent")
-        if acl_entry.IsPublicReader:
-            self.__flags.append("Read Public Documents")
-        if acl_entry.IsPublicWriter:
-            self.__flags.append("Write Public Documents")
+        flags = 0
+        possible = dict(
+            CanCreateDocuments=ACLFLAGS.CREATE_DOCUMENTS,
+            CanDeleteDocuments=ACLFLAGS.DELETE_DOCUMENTS,
+            CanCreatePersonalAgent=ACLFLAGS.CREATE_PRIV_AGENTS,
+            CanCreatePersonalFolder=ACLFLAGS.CREATE_PRIV_FOLDERS_VIEWS,
+            CanCreateSharedFolder=ACLFLAGS.CREATE_SHARED_FOLDERS_VIEWS,
+            CanCreateLSOrJavaAgent=ACLFLAGS.CREATE_SCRIPT_AGENTS,
+            IsPublicReader=ACLFLAGS.READ_PUBLIC_DOCUMENTS,
+            IsPublicWriter=ACLFLAGS.WRITE_PUBLIC_DOCUMENTS,
+        )
+        for key, value in possible.items():
+            if getattr(acl_entry, key):
+                flags += value
+        self.__flags = ACLFLAGS(flags)
 
     def __lt__(self, other):
         """For sorting: compare on name."""
@@ -333,16 +338,11 @@ class ACLEntry:
 
     def __str__(self):
         """For printing"""
-        s = f"Name : {self.name}\nLevel: {self.level}\n"
-        # if self.roles:
-        #     for role in self.roles:
-        #         s += f"Role : {role}\n"
-        # else:
-        #     s += "Role : No roles\n"
-        s += f"Roles: {self.roles}\n"
-        if self.getFlags():
-            for flag in self.getFlags():
-                s += f"Flag : {flag}\n"
-        else:
-            s += "Flag : No flags\n"
-        return s
+        s = [
+            f"Name : {self.name}",
+            f"Type : {self.type}",
+            f"Level: {self.level}",
+            f"Roles: {self.roles}",
+            f"Flags: {self.flags}",
+        ]
+        return "\n".join(s) + "\n"

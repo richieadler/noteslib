@@ -74,6 +74,10 @@ def load_notes_db():
     if not acle:
         acle = acl.CreateACLEntry('-Default-', 6)
     acle.EnableRole("TestRole")
+    acle = acl.GetEntry('John Doe/Test')
+    if not acle:
+        acle = acl.CreateACLEntry('John Doe/Test', 6)
+        acle.Level = 3
     acl.Save()
     vw = db.GetView('($All)')
     if not vw:

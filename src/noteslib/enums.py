@@ -1,4 +1,26 @@
+"""
+Enumerations to represent Notes "magic numbers" or assorted values which are logically related
+"""
+
 import enum
+
+
+class ACLFLAGS(enum.IntFlag):
+    """ACL flags for an entry"""
+
+    CREATE_DOCUMENTS = 1
+    DELETE_DOCUMENTS = 2
+    CREATE_PERSONAL_AGENTS = 4
+    CREATE_PRIV_AGENTS = 4
+    CREATE_PERSONAL_FOLDERS_AND_VIEWS = 8
+    CREATE_PRIV_FOLDERS_VIEWS = 8
+    CREATE_SHARED_FOLDERS_AND_VIEWS = 16
+    CREATE_SHARED_FOLDERS_VIEWS = 16
+    CREATE_SCRIPT_AGENTS = 32
+    READ_PUBLIC_DOCUMENTS = 64
+    WRITE_PUBLIC_DOCUMENTS = 128
+    REPLICATE_AND_COPY_DOCUMENTS = 256
+    REPLICATE_COPY_DOCUMENTS = 256
 
 
 class ACLLEVEL(enum.IntEnum):
@@ -11,6 +33,17 @@ class ACLLEVEL(enum.IntEnum):
     EDITOR = 4
     DESIGNER = 5
     MANAGER = 6
+
+
+class ACLTYPE(enum.IntEnum):
+    """ACL Entry types"""
+
+    UNSPECIFIED = 0
+    PERSON = 1
+    SERVER = 2
+    MIXED_GROUP = 3
+    PERSON_GROUP = 4
+    SERVER_GROUP = 5
 
 
 class ITEMTYPE(enum.IntEnum):

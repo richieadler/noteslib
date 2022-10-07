@@ -8,8 +8,8 @@ class Document:
         self.__handle = doc
 
     def __eq__(self, other):
-        docself = self.__handle
-        docother = other.__handle
+        docself = self.notesobj
+        docother = other.notesobj
         return (
             docself.ParentDatabase.ReplicaID == docother.ParentDatabase.ReplicaID
             and docself.UniversalID == docother.UniversalID
@@ -29,6 +29,10 @@ class Document:
     def __getattr__(self, name):
         """Delegate to the Notes object to support all properties and methods."""
         return getattr(self.__handle, name)
+
+    @property
+    def notesobj(self):
+        return self.__handle
 
     @staticmethod
     def _get(item):
