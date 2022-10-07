@@ -197,7 +197,7 @@ Example:
     >>> import noteslib
     >>> acl = noteslib.ACL("NYNotes1", "ACLTest.nsf", "password")
     >>> for entry in acl.getAllEntries():
-    ...     print (entry.getName())
+    ...     print (entry.name())
     ...
     -Default-
     Alice Author
@@ -287,9 +287,10 @@ Example:
         self._load_roles(notes_acl_entry)
         self._load_flags(notes_acl_entry)
 
-    def getName(self):
+    @property
+    def name(self):
         """Returns the ACLEntry Name."""
-        return self.__name
+        return self.__handle.Name
 
     def getLevel(self):
         """Returns the ACLEntry Level, translated to a string."""
@@ -341,7 +342,7 @@ Example:
 
     def __str__(self):
         """For printing"""
-        s = f"Name : {self.getName()}\nLevel: {self.getLevel()}\n"
+        s = f"Name : {self.name()}\nLevel: {self.getLevel()}\n"
         if self.getRoles():
             for role in self.getRoles():
                 s += f"Role : {role}\n"
