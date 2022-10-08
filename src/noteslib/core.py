@@ -70,7 +70,7 @@ class Session:
 
     @property
     def notesobj(self):
-        """Return the underlying NotesSession COM object"""
+        """Returns the original Notes object"""
         return self.__handle
 
 
@@ -106,12 +106,12 @@ class Database:
         >>> a = noteslib.Database("NYNotes1", "ACLTest.nsf", "password")
         >>> id(a)
         15281724
-        >>> id(a._Database__handle)
+        >>> id(a.notesobj)
         15286172
         >>> b = noteslib.Database("NYNotes1", "ACLTest.nsf")
         >>> id(b)
         15270044
-        >>> id(b._Database__handle)
+        >>> id(b.notesobj)
         15286172
 
         a and b are different objects, but they share the same internal
@@ -127,6 +127,8 @@ class Database:
     """
 
     __handleCache: Dict[tuple, Any] = {}
+
+    # TODO: Wrap Database.ACL with our own ACL
 
     def __init__(self, server, db_path, password=None):
         """Set the db handle, either from cache or via the COM connection."""
@@ -153,6 +155,7 @@ class Database:
 
     @property
     def notesobj(self):
+        """Returns the original Notes object"""
         return self.__handle
 
 
@@ -164,8 +167,6 @@ class ACL:
 
     Additional features:
     * You can print an ACL object. It knows how to format itself reasonably.
-    * getAllEntries() method - Returns the ACL contents as a list of ACLEntry
-        objects, sorted by Name.
 
     You don't have to create Session or Database objects first. An ACL object
     creates its own Session and Database objects automatically.
@@ -182,8 +183,8 @@ class ACL:
 
         >>> import noteslib
         >>> acl = noteslib.ACL("NYNotes1", "ACLTest.nsf", "password")
-        >>> for entry in acl.getAllEntries():
-        ...     print (entry.name())
+        >>> for entry in acl.entries:
+        ...     print (entry.name)
         ...
         -Default-
         Alice Author
@@ -196,20 +197,12 @@ class ACL:
         Randy Reader
     """
 
+    # TODO: Allow initialization with existing NotesACL
+
     def __init__(self, server, db_path, password=None):
         """Set the ACL handle, and retrieve the ACL entries."""
-        self.__entries = []
         db = Database(server, db_path, password)
         self.__handle = db.ACL
-        next_entry = self.__handle.GetFirstEntry()
-        while next_entry:
-            self.__entries.append(ACLEntry(next_entry))
-            next_entry = self.__handle.GetNextEntry(next_entry)
-        self.__entries.sort()
-
-    def getAllEntries(self):
-        """Returns a list of noteslib ACLEntry objects, sorted by Name."""
-        return self.__entries
 
     def __getattr__(self, name):
         """Delegate to the Notes object to support all properties and methods."""
@@ -218,9 +211,20 @@ class ACL:
     def __str__(self):
         """For printing"""
         s = ""
-        for entry in self.getAllEntries():
+        for entry in self.entries:
             s += f"{entry}\n"
         return s
+
+    @property
+    def entries(self) -> list:
+        """Returns a sorted list of ACLEntry objects based on the NotesACLEntry objects from the original"""
+        entry_list = []
+        next_entry = self.__handle.GetFirstEntry()
+        while next_entry:
+            entry_list.append(ACLEntry(next_entry))
+            next_entry = self.__handle.GetNextEntry(next_entry)
+        entry_list.sort()
+        return entry_list
 
 
 class ACLEntry:
@@ -234,30 +238,22 @@ class ACLEntry:
 
     Normally, you won't create an ACLEntry object directly. Instead, you can
     retrieve a list of ACLEntry objects from an ACL object, via its
-    getAllEntries() method.
+    `entries` property.
 
     Example:
 
         >>> import noteslib
         >>> acl = noteslib.ACL("NYNotes1", "ACLTest.nsf", "password")
-        >>> print (acl.getAllEntries()[3])
+        >>> print (acl.entries[3])
         Name : bob
         Level: Manager
-        Role : [Role1]
-        Role : [Role2]
-        Role : [Role3]
-        Flag : Create Documents
-        Flag : Delete Documents
-        Flag : Create Personal Agents
-        Flag : Create Personal Folders/Views
-        Flag : Create Shared Folders/Views
-        Flag : Create LotusScript/Java Agent
-        Flag : Read Public Documents
-        Flag : Write Public Documents
+        Roles: [Role1], [Role2], [Role3]
+        Flags: Create Documents, Delete Documents, Create Personal Agents, Create Personal Folders And Views,
+          Create Shared Folders And Views, Create Agent, Read Public Documents, Write Public Documents
     """
 
     def __init__(self, notes_acl_entry):
-        """The parameter is a LotusScript NotesACLEntry object."""
+        """The parameter is a COM NotesACLEntry object."""
         self.__handle = notes_acl_entry
         self.__level = ACLLEVEL(notes_acl_entry.Level)
         self.__type = ACLTYPE(notes_acl_entry.UserType)
@@ -275,20 +271,21 @@ class ACLEntry:
 
     @property
     def type(self):
+        """Returns the ACLEntry type"""
         return str(self.__type.name).title()
 
     @property
     def flags(self):
         """Returns a list of the ACLEntry flags, translated to strings."""
-        return [
+        return ", ".join(
             _.replace("_", " ").title()
             for _ in str(self.__flags).split(".")[1].split("|")
-        ]
+        )
 
     @property
     def roles(self):
         """Returns a list of the ACLEntry roles."""
-        return list(self.__handle.Roles)
+        return ", ".join(self.__handle.Roles)
 
     def _load_flags(self, acl_entry):
         """Translate the entry's flags into a list of strings."""

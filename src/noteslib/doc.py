@@ -1,7 +1,6 @@
 """
 Document - wrapper around a NotesDocument.
 
-TODO: Date conversions from NotesDateTime to datetime.datetime (NOT pywintime.datetime)
 """
 
 from .enums import ITEMTYPE
@@ -33,16 +32,17 @@ class Document:
         return self._get(item)
 
     def __getattr__(self, name):
-        """Delegate to the Notes object to support all properties and methods."""
+        """Delegates to the Notes object to support all properties and methods."""
         return getattr(self.__handle, name)
 
     @property
     def notesobj(self):
+        """Returns the original Notes object"""
         return self.__handle
 
     @staticmethod
     def _get(item):
-        """Return value according to type and other considerations"""
+        """Returns value according to type and other considerations"""
 
         if item.Type == ITEMTYPE.RICHTEXT:
             return item.Text

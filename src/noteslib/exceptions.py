@@ -1,4 +1,7 @@
-# pylint: disable=multiple-statements
+"""
+Exceptions for operations with Notes objects
+"""
+
 from typing import Union
 
 
