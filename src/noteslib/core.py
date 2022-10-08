@@ -49,7 +49,6 @@ class Session:
         self.__dict__ = self._shared_state
         if self.__dict__.get("_handle") is None:
             self._connect_to_notes(password)
-            print(f"Session: {id(self._handle)}", file=sys.stderr)
 
     def _connect_to_notes(self, password=None):
         """Connect to Notes via COM."""

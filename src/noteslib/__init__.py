@@ -5,7 +5,7 @@
 from .core import *
 from .doccoll import *
 
-__version__ = "3.0.0a1"
+__version__ = "3.0.0a2"
 __description__ = """
 noteslib is a library of Python classes for manipulating Lotus
 Notes/Domino objects via COM.
