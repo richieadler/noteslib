@@ -54,8 +54,6 @@ class DATECONV(enum.Flag):
     NAIVE = enum.auto()
     NATIVE = enum.auto()
     NATIVESTRING = enum.auto()
-    ISO8601 = enum.auto()
-    JSON = ISO8601
     DEFAULT = DATETIME
 
 
