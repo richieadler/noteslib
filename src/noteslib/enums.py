@@ -46,6 +46,30 @@ class ACLTYPE(enum.IntEnum):
     SERVER_GROUP = 5
 
 
+class DATECONV(enum.Flag):
+    """Date conversion modes"""
+
+    DATETIME = enum.auto()
+    LOCAL = enum.auto()
+    NAIVE = enum.auto()
+    NATIVE = enum.auto()
+    NATIVESTRING = enum.auto()
+    ISO8601 = enum.auto()
+    JSON = ISO8601
+    DEFAULT = DATETIME
+
+
+class RTCONV(enum.Flag):
+    """Rich Text conversion types"""
+
+    NONE = enum.auto()
+    TEXT = enum.auto()
+    FORMATTED = enum.auto()
+    UNFORMATTED = enum.auto()
+    DEFAULT = NONE
+    # TODO: XML, HTML
+
+
 class ITEMTYPE(enum.IntEnum):
     """Item types"""
 

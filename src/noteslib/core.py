@@ -1,7 +1,7 @@
 """
 Main classes to interact with Notes, and other useful classes available in the initial version of NotesLib
 """
-
+import sys
 from typing import Any, Dict
 
 import win32com.client
@@ -47,17 +47,18 @@ class Session:
 
     def __init__(self, password=None):
         self.__dict__ = self._shared_state
-        if self.__dict__.get("__handle") is None:
+        if self.__dict__.get("_handle") is None:
             self._connect_to_notes(password)
+            print(f"Session: {id(self._handle)}", file=sys.stderr)
 
     def _connect_to_notes(self, password=None):
         """Connect to Notes via COM."""
         try:
-            self.__handle = win32com.client.Dispatch("Lotus.NotesSession")
+            self._handle = win32com.client.Dispatch("Lotus.NotesSession")
             if password:
-                self.__handle.Initialize(password)
+                self._handle.Initialize(password)
             else:
-                self.__handle.Initialize()
+                self._handle.Initialize()
         except Exception as exc:
             raise SessionError() from exc
 
@@ -66,12 +67,12 @@ class Session:
 
     def __getattr__(self, name):
         """Delegate to the Notes object to support all properties and methods."""
-        return getattr(self.__handle, name)
+        return getattr(self._handle, name)
 
     @property
     def notesobj(self):
         """Returns the original Notes object"""
-        return self.__handle
+        return self._handle
 
 
 class Database:

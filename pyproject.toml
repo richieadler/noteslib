@@ -12,6 +12,7 @@ requires-python = ">=3.8"
 license = "MIT"
 dependencies = [
 	"pywin32",
+	"pendulum",
 ]
 classifiers = [
 	"Development Status :: 4 - Beta",
@@ -68,8 +69,8 @@ fmt = [
 ]
 
 [tool.pylint]
-good-names = "s,nc,db,ix"
-max-line-length = 120
+good-names = "s,nc,ns,db,ix"
+max-line-length = 140
 
 [[tool.mypy.overrides]]
 
