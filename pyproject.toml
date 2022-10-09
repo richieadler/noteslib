@@ -68,6 +68,19 @@ fmt = [
 	"black src",
 ]
 
+[tool.hatch.envs.docs]
+platforms = ["windows"]
+python = "D:/Prog/Python38-32/python.exe"
+dependencies = [
+	"sphinx",
+	"sphinx_rtd_theme",
+]
+
+[tool.hatch.envs.docs.scripts]
+build = [
+	"sphinx-build -b html docs docs/_build",
+]
+
 [tool.pylint]
 good-names = "s,nc,ns,db,ix"
 max-line-length = 140
