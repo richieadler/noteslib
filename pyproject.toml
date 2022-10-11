@@ -65,6 +65,9 @@ check = [
 	"- black --check --diff src",
 	"- mypy src"
 ]
+check-types = [
+	"mypy --disallow-untyped-calls --disallow-untyped-defs --disallow-incomplete-defs src"
+]
 fmt = [
 	"isort src",
 	"black src",
