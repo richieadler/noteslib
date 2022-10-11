@@ -1,18 +1,14 @@
-
 import pytest
-import noteslib
 import wmi
-
 from lxml import etree
 
-from noteslib.doc import Document, DocumentCollection
+from noteslib import Document, DocumentCollection, Session
 
 DBSERVER = ''
 DBPATH = '__test__.nsf'
 
 PREFIX = u'http://www.lotus.com/dxl'
 NS = {'n': PREFIX}
-
 
 NOTES_EXES = ["nlnotes.exe", "notes.exe", "notes2.exe"]
 WMI = wmi.WMI()
@@ -40,6 +36,7 @@ def fixview(ns, vw, startcol, endcol):
 
 
 def get_or_create_doc(db, key):
+    ns = Session()
     if not isinstance(key, list):
         key = [key]
     vw = db.GetView('CatView')
@@ -54,6 +51,12 @@ def get_or_create_doc(db, key):
             lcat.append(str(cat))
             ri(ncat, cat)
         ri('Categories', '\\'.join(lcat))
+        if not doc.HasItem("Body"):
+            body = doc.CreateRichTextItem("Body")
+            style = ns.CreateRichTextStyle()
+            style.NotesFont = 1  # FONT_HELV
+            body.AppendStyle(style)
+            body.AppendText("Test")
         doc.Save(1, 0, 1)
     return doc
 
@@ -61,7 +64,7 @@ def get_or_create_doc(db, key):
 @pytest.fixture(scope='session')
 def load_notes_db():
     """Return NotesSession and NotesDatabase test objects"""
-    ns = noteslib.Session()
+    ns = Session()
     db = ns.GetDatabase(DBSERVER, DBPATH, False)
     if not db:
         dbdir = ns.GetDbDirectory('')
@@ -115,6 +118,14 @@ def load_notes_db():
     # Specific sets of documents needed
     doc = get_or_create_doc(db, [0, 0, 0])
     doc.ReplaceItemValue('Value', 'First!')
+    dt = ns.CreateDateTime("Today 12:00")
+    localzone = dt.LocalTime.split(" ")[-1]
+    dt = ns.CreateDateTime("January 1, 2001 12:34:56 " + localzone)
+    doc.ReplaceItemValue("TestDate", dt)
+
+    dt = ns.CreateDateTime("January 1, 2001 12:34:56 GMT")
+    doc.ReplaceItemValue("TestDateGMT", dt)
+
     doc.Save(1, 0, 1)
     docs = vw.GetAllDocumentsByKey('CatTest', True)
     if docs.Count == 0:
@@ -150,8 +161,20 @@ def temp_doc(load_notes_db):
 @pytest.fixture(scope='function')
 def doc0(load_notes_db):
     _, db = load_notes_db
-    doc = get_or_create_doc(db, [0, 0, 0])
+    vw = db.GetView("CatView")
+    doc = vw.GetDocumentByKey([0, 0, 0])
     yield Document(obj=doc)
+
+
+@pytest.fixture(scope='function')
+def docs0(load_notes_db):
+    _, db = load_notes_db
+    vw = db.GetView("CatView")
+    docs = vw.GetAllDocumentsByKey([0, 0, 0])
+    docs2 = db.Search('Value = "CatTest-Cat1_10-Cat2_10"', None, 0)
+    doc2 = docs2.GetFirstDocument()
+    docs.AddDocument(doc2)
+    yield DocumentCollection(obj=docs)
 
 
 @pytest.fixture(scope='function')

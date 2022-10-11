@@ -76,7 +76,6 @@ class Document(NotesLibObject):
 
     def __getitem__(self, name):
         """Get item value by name, as index"""
-        # TODO: Allow a "Compact" mode (return a scalar if there is only 1 value in the item.Values)
         # TODO: Rich text conversions
         item = self._handle.GetFirstItem(name)
         if item is None:

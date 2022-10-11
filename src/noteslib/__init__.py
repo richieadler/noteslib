@@ -3,6 +3,7 @@
 """
 
 from .core import *
+from .db import *
 from .doc import *
 
 __version__ = "3.0.0a2"
