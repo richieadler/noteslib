@@ -29,7 +29,7 @@ class NotesLibObject:
         return self._handle
 
 
-class Session(NotesLibObject):
+class Session(NotesLibObject):  # pylint: disable=too-few-public-methods
     r"""
     The Session class creates an COM connection to Notes. It supports all
     the properties and methods of the LotusScript NotesSession class, using
@@ -144,7 +144,9 @@ class Database(NotesLibObject):
         if obj:
             server, db_path = obj.Server, obj.FilePath
         cache_key = (server.lower(), db_path.lower())
-        cached_handle = self.__handleCache.get(cache_key, self._get_db(cache_key, password))
+        cached_handle = self.__handleCache.get(
+            cache_key, self._get_db(cache_key, password)
+        )
         super().__init__(obj=cached_handle)
 
     def _get_db(self, cache_key, password):
@@ -208,7 +210,9 @@ class ACL(NotesLibObject):
             elif hasattr(obj, "GetFirstEntry"):  # ACL
                 handle = obj
             else:
-                raise ValueError("The object passed is neither NotesACL nor NotesDatabase")
+                raise ValueError(
+                    "The object passed is neither NotesACL nor NotesDatabase"
+                )
         super().__init__(obj=handle)
 
     def __str__(self):

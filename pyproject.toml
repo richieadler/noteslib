@@ -33,6 +33,7 @@ path = "src/noteslib/__init__.py"
 
 [tool.hatch.envs.test]
 platforms = ["windows"]
+description = "Testing with pytest, including coverage"
 python = "D:/Prog/Python38-32/python.exe"
 dependencies = [
 	"lxml",
@@ -48,6 +49,7 @@ test-v = "pytest -vv --cov=src/noteslib --cov-report=term-missing tests"
 
 [tool.hatch.envs.lint]
 platforms = ["windows"]
+description = "Syntax and format checking"
 python = "D:/Prog/Python38-32/python.exe"
 dependencies = [
 	"black",
