@@ -3,13 +3,14 @@ Document - wrapper around a NotesDocument.
 
 """
 import datetime
+import json
 from functools import partial
-from typing import Union
+from typing import Any, Union
 
 import pendulum as p
 from win32com.client import CDispatch
 
-from .core import Session
+from .core import NotesLibObject, Session
 from .enums import DATECONV, ITEMTYPE, RTCONV
 
 
@@ -37,11 +38,36 @@ def _fndt(ndt, *, zone):
     return _c(p.instance(ndt).in_tz(zone))
 
 
-class Document:
-    """Wrapper for NotesDocument with "pythonic" syntax"""
+class Document(NotesLibObject):
+    """
+    The Document class encapsulates a Notes database Document. It supports all the
+    properties and methods of the LotusScript NotesDocument class, using the same
+    syntax.
 
-    def __init__(self, doc):
-        self.__handle = doc
+    Additional features:
+
+    * It can retrieve an item value using "item" syntax.
+
+      * Using this syntax performs
+        conversions on NOTESDATE fields and returns a normal ``datetime.datetime`` object
+        (**not** a ``pywintype.datetime``), with GMT timezone.
+
+       * A non-existing item raises ``KeyError`` instead of returning an array containing
+         a single empty string like ``NotesDoc.GetItemValue()`` does.
+
+      >>> doc["Form"]
+      'Memo'
+
+    * It has a ``get()`` method which allows to get a default value for missing items,
+      as well as parameters to customize the conversion of Notes DATETIME and RICHTEXT
+      items.
+
+    * The ``dict()`` method returns a ``dict`` version of the document.
+
+    """
+
+    def __init__(self, *, obj=None):
+        super().__init__(obj=obj)
 
     def __eq__(self, other):
         docself = self.notesobj
@@ -55,24 +81,16 @@ class Document:
         """Get item value by name, as index"""
         # TODO: Allow a "Compact" mode (return a scalar if there is only 1 value in the item.Values)
         # TODO: Rich text conversions
-        item = self.__handle.GetFirstItem(name)
+        item = self._handle.GetFirstItem(name)
         if item is None:
             # TODO: Different return modes for non-existing items
             raise KeyError(repr(name))
         return self.get(item)
 
-    def __getattr__(self, name):
-        """Delegates to the Notes object to support all properties and methods."""
-        return getattr(self.__handle, name)
-
-    @property
-    def notesobj(self):
-        """Returns the original Notes object"""
-        return self.__handle
-
     def get(
         self,
         item: Union[CDispatch, str],
+        default: Any = None,
         *,
         convert_date: Union[DATECONV, str] = DATECONV.DEFAULT,
         convert_rt=RTCONV.NONE,
@@ -82,6 +100,8 @@ class Document:
 
         :param item: Document item
         :type item: NotesItem
+
+        :param default: Value returned for a non-existing item
 
         :param convert_date: valid value in the enum DATECONV, or string,
             affecting NotesDateTime fields returned as DATETIME variants in COM:
@@ -111,14 +131,12 @@ class Document:
             ending ``datetime`` instances for each range, all with the proper time zone according to
             the specified `convert_date` value.
 
-        :param convert_rt: conversion for ``NotesRichText`` items.
-        :type convert_rt: a member of RTCONV
+        :param convert_rt: conversion for ``NotesRichText`` items
 
-        :returns: ``list`` of elements of type corresponding to the first element on the item, and the
-          subsequent conversions
+        :returns: ``list`` of elements of type corresponding to the item, and the subsequent conversions
 
         """
-        doc = self.__handle
+        doc = self._handle
         if isinstance(item, str):
             item = doc.GetFirstItem(item)
 
@@ -130,7 +148,7 @@ class Document:
             )
 
         if item is None:
-            return []
+            return default
         if item.type == ITEMTYPE.RICHTEXT:
             if convert_rt == RTCONV.NONE:
                 lst = [item.Text]
@@ -158,7 +176,7 @@ class Document:
         return list(lst)
 
     def _convert_datetime(self, item, convert_date):
-        doc = self.__handle
+        doc = self._handle
 
         if convert_date == DATECONV.NATIVE:
             lst = item.GetValueDateTimeArray()
@@ -196,3 +214,70 @@ class Document:
             else:
                 lst = [func(_.LSGMTTime) for _ in lst]
         return lst
+
+    def dict(self, *, omit_special=False):
+        """Return a ``dict`` with a reasonable representation of the document's contents.
+        The dates are returned in ISO8601-compatible format.
+        """
+        return {
+            item.Name: self.get(item, convert_date="tz:GMT:str")
+            for item in self._handle.Items
+            if not (omit_special and item.Name.startswith("$"))
+        }
+
+    def json(self, *args: Any, omit_special=False, **kwargs: Any):
+        """Return a JSON version of the ``dict()`` method"""
+        return json.dumps(self.dict(omit_special=omit_special), **kwargs)
+
+
+class DocumentCollection(NotesLibObject):
+    """The DocumentCollection class encapsulates a Notes database DocumentCollection. It supports
+    all the properties and methods of the LotusScript NotesDocumentCollection class, using the same
+    syntax.
+
+    Additional properties:
+
+    * The nth document of a collection can be retrieved by using ``coll[n-1]`` (indices in Python
+      start at 0, NotesDocumentCollection indices start at 1). Negative indices can be used.
+    * ``len(coll)`` returns the number of documents of the collection.
+    * The collection can be iterated (even in reverse) so code as:
+
+      ..  code:: python
+
+          for doc in coll:
+              print(doc["Form"])
+          for doc in reversed(coll):
+              print(doc.UniversalID)
+
+      are valid.
+
+    """
+
+    def __init__(self, *, obj):
+        super().__init__(obj=obj)
+
+    def __len__(self):
+        return self._handle.Count
+
+    def __getitem__(self, item):
+        if not isinstance(item, int):
+            raise IndexError(f"{self.__class__.__name__} indices must be integers")
+        ix = (item % len(self)) + 1
+        doc = self._handle.GetNthDocument(ix)
+        if doc.IsDeleted or not doc.IsValid:
+            doc = None
+        return Document(obj=doc) if doc is not None else None
+
+    def __iter__(self):
+        coll = self._handle
+        doc = coll.GetFirstDocument()
+        while doc:
+            yield Document(obj=doc)
+            doc = coll.GetNextDocument(doc)
+
+    def __reversed__(self):
+        coll = self._handle
+        doc = coll.GetLastDocument()
+        while doc:
+            yield Document(obj=doc)
+            doc = coll.GetPrevDocument(doc)

@@ -3,7 +3,7 @@
 """
 
 from .core import *
-from .doccoll import *
+from .doc import *
 
 __version__ = "3.0.0a2"
 __description__ = """

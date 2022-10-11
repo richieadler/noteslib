@@ -165,6 +165,7 @@ class ACL(NotesLibObject):
     syntax.
 
     Additional features:
+
     * You can print an ACL object. It knows how to format itself reasonably.
 
     You don't have to create Session or Database objects first. An ACL object
@@ -235,11 +236,12 @@ class ACLEntry(NotesLibObject):
     using the same syntax.
 
     Additional features:
+
     * You can print an ACLEntry object. It knows how to format itself reasonably.
 
     Normally, you won't create an ACLEntry object directly. Instead, you can
     retrieve a list of ACLEntry objects from an ACL object, via its
-    `entries` property.
+    ``entries`` method.
 
     Example:
 

@@ -5,8 +5,7 @@ import wmi
 
 from lxml import etree
 
-from noteslib import DocumentCollection
-from noteslib.doc import Document
+from noteslib.doc import Document, DocumentCollection
 
 DBSERVER = ''
 DBPATH = '__test__.nsf'
@@ -152,10 +151,10 @@ def temp_doc(load_notes_db):
 def doc0(load_notes_db):
     _, db = load_notes_db
     doc = get_or_create_doc(db, [0, 0, 0])
-    yield Document(doc)
+    yield Document(obj=doc)
 
 
 @pytest.fixture(scope='function')
 def all_docs(load_notes_db):
     _, db = load_notes_db
-    yield DocumentCollection(db.AllDocuments)
+    yield DocumentCollection(obj=db.AllDocuments)
