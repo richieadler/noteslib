@@ -1,4 +1,4 @@
-from noteslib import ACL, Database, Session
+from noteslib import ACL, Database, Document, Session
 from pytest_check import check_func
 
 CACHE_DB = ("", "cache.ndk")
@@ -40,3 +40,11 @@ def test_native_properties(load_notes_db):
     assert acl.entries()[0].Level == 6
     assert acl.roles == acl.Roles
 
+
+@check_func
+def test_doc(doc0):
+    doc = Document(obj=doc0)
+    dict_doc = doc.dict()
+    assert dict_doc["Form"] == ["Test"]
+    assert dict_doc["TestDate"] == ['2001-01-01T15:34:56+00:00']
+    assert "$Revisions" not in doc.json(omit_special=True)
