@@ -6,10 +6,12 @@
 # -- Project information -----------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
 
+from noteslib import __version__
+
 project = 'Noteslib'
 copyright = '2008-2022, Richard Follek, Marcelo Huerta'
 author = 'Richard Follek / Marcelo Huerta'
-release = '3.0.0'
+release = __version__
 
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
@@ -23,6 +25,9 @@ extensions = [
 templates_path = ['_templates']
 exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
 
+autoclass_content = "both"
+autodoc_class_signature = "mixed"
+autodoc_member_order = "bysource"
 
 
 # -- Options for HTML output -------------------------------------------------

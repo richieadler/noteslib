@@ -74,7 +74,7 @@ fmt = [
 platforms = ["windows"]
 python = "D:/Prog/Python38-32/python.exe"
 dependencies = [
-	"sphinx",
+	"sphinx==5.2.3",
 	"sphinx_rtd_theme",
 ]
 
