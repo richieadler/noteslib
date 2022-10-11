@@ -56,7 +56,7 @@ class Document(NotesLibObject):
          a single empty string like ``NotesDoc.GetItemValue()`` does.
 
       >>> doc["Form"]
-      'Memo'
+      ['Memo']
 
     * It has a ``get()`` method which allows to get a default value for missing items,
       as well as parameters to customize the conversion of Notes DATETIME and RICHTEXT
@@ -65,9 +65,6 @@ class Document(NotesLibObject):
     * The ``dict()`` method returns a ``dict`` version of the document.
 
     """
-
-    def __init__(self, *, obj=None):
-        super().__init__(obj=obj)
 
     def __eq__(self, other):
         docself = self.notesobj
@@ -83,7 +80,6 @@ class Document(NotesLibObject):
         # TODO: Rich text conversions
         item = self._handle.GetFirstItem(name)
         if item is None:
-            # TODO: Different return modes for non-existing items
             raise KeyError(repr(name))
         return self.get(item)
 
@@ -225,7 +221,7 @@ class Document(NotesLibObject):
             if not (omit_special and item.Name.startswith("$"))
         }
 
-    def json(self, *args: Any, omit_special=False, **kwargs: Any):
+    def json(self, *, omit_special=False, **kwargs: Any):
         """Return a JSON version of the ``dict()`` method"""
         return json.dumps(self.dict(omit_special=omit_special), **kwargs)
 
