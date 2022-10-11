@@ -185,7 +185,7 @@ class ACL(NotesLibObject):
 
         >>> import noteslib
         >>> acl = noteslib.ACL("NYNotes1", "ACLTest.nsf", "password")
-        >>> for entry in acl.entries():
+        >>> for entry in acl.entries:
         ...     print (entry.name)
         ...
         -Default-
@@ -218,10 +218,11 @@ class ACL(NotesLibObject):
     def __str__(self):
         """For printing"""
         s = ""
-        for entry in self.entries():
+        for entry in self.entries:
             s += f"{entry}\n"
         return s
 
+    @property
     def entries(self) -> list:
         """Returns a sorted list of ACLEntry objects based on the NotesACLEntry objects from the original"""
         entry_list = []
@@ -251,7 +252,7 @@ class ACLEntry(NotesLibObject):
 
         >>> import noteslib
         >>> acl = noteslib.ACL("NYNotes1", "ACLTest.nsf", "password")
-        >>> print (acl.entries()[3])
+        >>> print (acl.entries[3])
         Name : bob
         Level: Manager
         Roles: [Role1], [Role2], [Role3]

@@ -26,8 +26,8 @@ def test_acl(load_notes_db):
     _, db = load_notes_db
     acl1 = ACL(db.Server, db.FilePath)
     acl2 = ACL("", "", obj=db.ACL)
-    print(acl1.entries())
-    assert len(acl1.entries()) == 2
+    print(acl1.entries)
+    assert len(acl1.entries) == 2
     assert acl1 == acl2
 
 
@@ -37,7 +37,7 @@ def test_native_properties(load_notes_db):
     acl = ACL(db.Server, db.FilePath)
     assert "/" in ns.UserName
     assert hasattr(db.Created, "tzinfo")
-    assert acl.entries()[0].Level == 6
+    assert acl.entries[0].Level == 6
     assert acl.roles == acl.Roles
 
 
