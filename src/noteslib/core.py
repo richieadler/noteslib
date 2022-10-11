@@ -1,7 +1,6 @@
 """
 Main classes to interact with Notes, and other useful classes available in the initial version of NotesLib
 """
-import sys
 from typing import Any, Dict
 
 import win32com.client
@@ -10,7 +9,27 @@ from noteslib.enums import ACLFLAGS, ACLLEVEL, ACLTYPE
 from noteslib.exceptions import DatabaseError, SessionError
 
 
-class Session:
+class NotesLibObject:
+    """Generic NotesLib object to incorporate methods and properties common to all objects in the library"""
+
+    def __init__(self, *, obj=None):
+        self._handle = obj
+
+    def __eq__(self, other):
+        """Two NotesLibObjects are equal if they point to the same Notes object"""
+        return self.notesobj == other.notesobj
+
+    def __getattr__(self, name):
+        """Delegate to the Notes object to support all properties and methods."""
+        return getattr(self._handle, name)
+
+    @property
+    def notesobj(self):
+        """Returns the original Notes object"""
+        return self._handle
+
+
+class Session(NotesLibObject):
     r"""
     The Session class creates an COM connection to Notes. It supports all
     the properties and methods of the LotusScript NotesSession class, using
@@ -47,34 +66,24 @@ class Session:
 
     def __init__(self, password=None):
         self.__dict__ = self._shared_state
-        if self.__dict__.get("_handle") is None:
-            self._connect_to_notes(password)
+        obj = self.__dict__.get("_handle", self._connect_to_notes(password))
+        super().__init__(obj=obj)
 
-    def _connect_to_notes(self, password=None):
+    @staticmethod
+    def _connect_to_notes(password=None):
         """Connect to Notes via COM."""
         try:
-            self._handle = win32com.client.Dispatch("Lotus.NotesSession")
+            obj = win32com.client.Dispatch("Lotus.NotesSession")
             if password:
-                self._handle.Initialize(password)
+                obj.Initialize(password)
             else:
-                self._handle.Initialize()
+                obj.Initialize()
+            return obj
         except Exception as exc:
             raise SessionError() from exc
 
-    def __eq__(self, other):
-        return self.notesobj == other.notesobj
 
-    def __getattr__(self, name):
-        """Delegate to the Notes object to support all properties and methods."""
-        return getattr(self._handle, name)
-
-    @property
-    def notesobj(self):
-        """Returns the original Notes object"""
-        return self._handle
-
-
-class Database:
+class Database(NotesLibObject):
     r"""
     The Database class creates an COM connection to a Notes database. It
     supports all the properties and methods of the LotusScript NotesDatabase
@@ -115,7 +124,7 @@ class Database:
         15286172
 
         a and b are different objects, but they share the same internal
-        NotesDatabase object via the __handle variable.
+        NotesDatabase object via the _handle variable.
     """
 
     __DB_ERROR = r"""
@@ -130,36 +139,26 @@ class Database:
 
     # TODO: Wrap Database.ACL with our own ACL
 
-    def __init__(self, server, db_path, password=None):
-        """Set the db handle, either from cache or via the COM connection."""
+    def __init__(self, server, db_path, password=None, *, obj=None):
+        """Set the db handle, either from cache or via the COM connection; or use the passed NotesDatabase"""
+        if obj:
+            server, db_path = obj.Server, obj.FilePath
         cache_key = (server.lower(), db_path.lower())
-        cached_handle = self.__handleCache.get(cache_key)
-        if cached_handle:
-            self.__handle = cached_handle
-        else:
-            try:
-                s = Session(password)
-                self.__handle = s.GetDatabase(server, db_path)
-                if self.__handle.IsOpen:  # Make sure everything's okay.
-                    self.__handleCache[cache_key] = self.__handle  # Cache the handle
-            except Exception as exc:
-                raise DatabaseError(self.__DB_ERROR % (server, db_path)) from exc
+        cached_handle = self.__handleCache.get(cache_key, self._get_db(cache_key, password))
+        super().__init__(obj=cached_handle)
 
-    def __eq__(self, other):
-        """Two databases are equal if they point to the same NotesDatabase object"""
-        return self.notesobj == other.notesobj
-
-    def __getattr__(self, name):
-        """Delegate to the Notes object to support all properties and methods."""
-        return getattr(self.__handle, name)
-
-    @property
-    def notesobj(self):
-        """Returns the original Notes object"""
-        return self.__handle
+    def _get_db(self, cache_key, password):
+        try:
+            s = Session(password)
+            obj = s.GetDatabase(*cache_key)
+            if obj.IsOpen:  # Make sure everything's okay.
+                self.__handleCache[cache_key] = obj  # Cache the handle
+            return obj
+        except Exception as exc:
+            raise DatabaseError(self.__DB_ERROR % cache_key) from exc
 
 
-class ACL:
+class ACL(NotesLibObject):
     r"""
     The ACL class encapsulates a Notes database ACL. It supports all the
     properties and methods of the LotusScript NotesACL class, using the same
@@ -183,7 +182,7 @@ class ACL:
 
         >>> import noteslib
         >>> acl = noteslib.ACL("NYNotes1", "ACLTest.nsf", "password")
-        >>> for entry in acl.entries:
+        >>> for entry in acl.entries():
         ...     print (entry.name)
         ...
         -Default-
@@ -197,37 +196,39 @@ class ACL:
         Randy Reader
     """
 
-    # TODO: Allow initialization with existing NotesACL
-
-    def __init__(self, server, db_path, password=None):
+    def __init__(self, server, db_path, password=None, *, obj=None):
         """Set the ACL handle, and retrieve the ACL entries."""
-        db = Database(server, db_path, password)
-        self.__handle = db.ACL
-
-    def __getattr__(self, name):
-        """Delegate to the Notes object to support all properties and methods."""
-        return getattr(self.__handle, name)
+        if obj is None:
+            db = Database(server, db_path, password)
+            handle = db.ACL
+        else:
+            if hasattr(obj, "Title"):  # Database
+                handle = obj.ACL
+            elif hasattr(obj, "GetFirstEntry"):  # ACL
+                handle = obj
+            else:
+                raise ValueError("The object passed is neither NotesACL nor NotesDatabase")
+        super().__init__(obj=handle)
 
     def __str__(self):
         """For printing"""
         s = ""
-        for entry in self.entries:
+        for entry in self.entries():
             s += f"{entry}\n"
         return s
 
-    @property
     def entries(self) -> list:
         """Returns a sorted list of ACLEntry objects based on the NotesACLEntry objects from the original"""
         entry_list = []
-        next_entry = self.__handle.GetFirstEntry()
+        next_entry = self._handle.GetFirstEntry()
         while next_entry:
-            entry_list.append(ACLEntry(next_entry))
-            next_entry = self.__handle.GetNextEntry(next_entry)
+            entry_list.append(ACLEntry(obj=next_entry))
+            next_entry = self._handle.GetNextEntry(next_entry)
         entry_list.sort()
         return entry_list
 
 
-class ACLEntry:
+class ACLEntry(NotesLibObject):
     r"""
     The ACLEntry class encapsulates a Notes database ACL entry. It supports
     all the properties and methods of the LotusScript NotesACLEntry class,
@@ -244,7 +245,7 @@ class ACLEntry:
 
         >>> import noteslib
         >>> acl = noteslib.ACL("NYNotes1", "ACLTest.nsf", "password")
-        >>> print (acl.entries[3])
+        >>> print (acl.entries()[3])
         Name : bob
         Level: Manager
         Roles: [Role1], [Role2], [Role3]
@@ -252,34 +253,34 @@ class ACLEntry:
           Create Shared Folders And Views, Create Agent, Read Public Documents, Write Public Documents
     """
 
-    def __init__(self, notes_acl_entry):
+    def __init__(self, *, obj=None):
         """The parameter is a COM NotesACLEntry object."""
-        self.__handle = notes_acl_entry
-        self.__level = ACLLEVEL(notes_acl_entry.Level)
-        self.__type = ACLTYPE(notes_acl_entry.UserType)
-        self._load_flags(notes_acl_entry)
+        self._level = ACLLEVEL(obj.Level)
+        self._type = ACLTYPE(obj.UserType)
+        self._load_flags(obj)
+        super().__init__(obj=obj)
 
     @property
     def name(self):
         """Returns the ACLEntry Name."""
-        return self.__handle.Name
+        return self.notesobj.Name
 
     @property
     def level(self):
         """Returns the ACLEntry Level, translated to a string."""
-        return str(self.__level.name).title()
+        return str(self._level.name).title()
 
     @property
     def type(self):
         """Returns the ACLEntry type"""
-        return str(self.__type.name).title()
+        return str(self._type.name).title()
 
     @property
     def flags(self):
         """Returns a list of the ACLEntry flags, translated to strings."""
         return ", ".join(
             _.replace("_", " ").title()
-            for _ in str(self.__flags).split(".")[1].split("|")
+            for _ in str(self._flags).split(".")[1].split("|")
         )
 
     @property
@@ -303,15 +304,11 @@ class ACLEntry:
         for key, value in possible.items():
             if getattr(acl_entry, key):
                 flags += value
-        self.__flags = ACLFLAGS(flags)
+        self._flags = ACLFLAGS(flags)
 
     def __lt__(self, other):
         """For sorting: compare on name."""
         return self.name.casefold() < other.name.casefold()
-
-    def __getattr__(self, name):
-        """Delegate to the Notes object to support all properties and methods."""
-        return getattr(self.__handle, name)
 
     def __str__(self):
         """For printing"""
