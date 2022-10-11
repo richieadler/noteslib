@@ -61,6 +61,7 @@ def get_or_create_doc(db, key):
 
 @pytest.fixture(scope='session')
 def load_notes_db():
+    """Return NotesSession and NotesDatabase test objects"""
     ns = noteslib.Session()
     db = ns.GetDatabase(DBSERVER, DBPATH, False)
     if not db:
