@@ -20,3 +20,7 @@ class SessionError(NotesLibError):
 
 class DatabaseError(NotesLibError):
     """Problem connecting to a Notes database"""
+
+
+class DbDirectoryError(NotesLibError):
+    """Error with DbDirectory"""

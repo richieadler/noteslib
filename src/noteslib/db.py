@@ -2,11 +2,11 @@
 Database related classes
 """
 
-from typing import Any, Dict
+from typing import Any, Dict, Iterable
 
 from .core import NotesLibObject, Session
-from .enums import ACLFLAGS, ACLLEVEL, ACLTYPE
-from .exceptions import DatabaseError
+from .enums import ACLFLAGS, ACLLEVEL, ACLTYPE, DB
+from .exceptions import DatabaseError, DbDirectoryError
 
 
 class Database(NotesLibObject):
@@ -253,3 +253,39 @@ class ACLEntry(NotesLibObject):
             f"Flags: {self.flags}",
         ]
         return "\n".join(s) + "\n"
+
+
+class DbDirectory(NotesLibObject):
+    """
+    The DbDirectory class encapsulates a Notes database directory. It supports all the
+    properties and methods of the LotusScript NotesDbDirectory class, using the same
+    syntax.
+
+    Additional features:
+
+    * It can be instantiated directly without depending on ``Session``.
+
+    * The ``databases()`` method returns a generator which produces the databases of the
+      indicated type found in the instantiated directory.
+
+    """
+
+    def __init__(self, server: str = "", obj=None):
+        if obj is not None:
+            if not hasattr(obj, "CreateDatabase"):
+                raise DbDirectoryError("The object passed to initialize is not a valid NotesDbDirectory")
+        else:
+            ns = Session()
+            obj = ns.GetDbDirectory(server)
+        super().__init__(obj=obj)
+
+    def databases(self, file_type=DB.DATABASE) -> Iterable[Database]:
+        """Iterates by all the databases of the indicated type for this DbDirectory.
+
+        :param file_type: Type of database to iterate
+        """
+        dbdir = self._handle
+        db = dbdir.GetFirstDatabase(file_type)
+        while db:
+            yield Database("", "", obj=db)
+            db = dbdir.GetNextDatabase()

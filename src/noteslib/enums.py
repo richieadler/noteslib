@@ -57,6 +57,14 @@ class DATECONV(enum.Flag):
     DEFAULT = DATETIME
 
 
+class DB(enum.IntEnum):
+    DATABASE = 1247
+    NOTES_DATABASE = DATABASE
+    REPLICA_CANDIDATE = 1245
+    TEMPLATE = 1248
+    TEMPLATE_CANDIDATE = 1246
+
+
 class RTCONV(enum.Flag):
     """Rich Text conversion types"""
 
