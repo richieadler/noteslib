@@ -273,7 +273,9 @@ class DbDirectory(NotesLibObject):
     def __init__(self, server: str = "", obj=None):
         if obj is not None:
             if not hasattr(obj, "CreateDatabase"):
-                raise DbDirectoryError("The object passed to initialize is not a valid NotesDbDirectory")
+                raise DbDirectoryError(
+                    "The object passed to initialize is not a valid NotesDbDirectory"
+                )
         else:
             ns = Session()
             obj = ns.GetDbDirectory(server)

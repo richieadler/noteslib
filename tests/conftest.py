@@ -3,6 +3,7 @@ import wmi
 from lxml import etree
 
 from noteslib import Document, DocumentCollection, Session
+from noteslib.enums import EMBED
 
 DBSERVER = ''
 DBPATH = '__test__.nsf'
@@ -122,11 +123,13 @@ def load_notes_db():
     localzone = dt.LocalTime.split(" ")[-1]
     dt = ns.CreateDateTime("January 1, 2001 12:34:56 " + localzone)
     doc.ReplaceItemValue("TestDate", dt)
-
     dt = ns.CreateDateTime("January 1, 2001 12:34:56 GMT")
     doc.ReplaceItemValue("TestDateGMT", dt)
-
+    if not doc.HasItem("Body2"):
+        body = doc.CreateRichTextItem("Body2")
+        body.EmbedObject(EMBED.ATTACHMENT, "", __file__)
     doc.Save(1, 0, 1)
+
     docs = vw.GetAllDocumentsByKey('CatTest', True)
     if docs.Count == 0:
         for i in range(1, 11):

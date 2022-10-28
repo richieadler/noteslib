@@ -4,6 +4,7 @@ Document - wrapper around a NotesDocument.
 """
 import datetime
 import json
+import re
 from functools import partial
 from typing import Any, Union
 
@@ -210,19 +211,53 @@ class Document(NotesLibObject):
                 lst = [func(_.LSGMTTime) for _ in lst]
         return lst
 
-    def dict(self, *, omit_special=False):
-        """Return a ``dict`` with a reasonable representation of the document's contents.
-        The dates are returned in ISO8601-compatible format.
-        """
-        return {
-            item.Name: self.get(item, convert_date="tz:GMT:str")
-            for item in self._handle.Items
-            if not (omit_special and item.Name.startswith("$"))
-        }
+    def dict(
+        self,
+        *,
+        omit_special=False,
+        omit_empty=False,
+        fieldmatch="",
+        lower=False,
+        flat=False,
+        compact=False,
+        convert_date: Union[DATECONV, str] = DATECONV.DATETIME,
+    ):
+        """Return a ``dict`` with a reasonable representation of the document's contents."""
+        ret = {}
+        doc = self._handle
+        if not doc.Items:
+            return {}
+        re_name = re.compile(fieldmatch, re.IGNORECASE)
+        for it in doc.Items:
+            nom = it.Name
+            try:
+                if nom == "$FILE" or (omit_special and nom.startswith("$")):
+                    continue
+                if omit_empty and it.Text == "":
+                    continue
+                if nom != "" and (fieldmatch == "" or re_name.search(nom) is not None):
+                    if lower:
+                        nom = nom.lower()
+                    if flat:
+                        ret[nom] = it.Text
+                    else:
+                        ret[nom] = self.get(it, convert_date=convert_date)
+                    if compact and isinstance(ret[nom], list) and len(ret[nom]) == 1:
+                        ret[nom] = ret[nom][0]
+            except Exception as e:
+                raise RuntimeError(
+                    f"** Problem with item {nom!r} in document {doc.UniversalID}"
+                ) from e
+        return ret
 
     def json(self, *, omit_special=False, **kwargs: Any):
         """Return a JSON version of the ``dict()`` method"""
-        return json.dumps(self.dict(omit_special=omit_special), **kwargs)
+        return json.dumps(
+            self.dict(
+                omit_special=omit_special, convert_date="tz:GMT:str", compact=True
+            ),
+            **kwargs,
+        )
 
 
 class DocumentCollection(NotesLibObject):

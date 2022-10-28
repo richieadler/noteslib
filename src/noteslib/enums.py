@@ -65,15 +65,10 @@ class DB(enum.IntEnum):
     TEMPLATE_CANDIDATE = 1246
 
 
-class RTCONV(enum.Flag):
-    """Rich Text conversion types"""
-
-    NONE = enum.auto()
-    TEXT = enum.auto()
-    FORMATTED = enum.auto()
-    UNFORMATTED = enum.auto()
-    DEFAULT = NONE
-    # TODO: XML, HTML
+class EMBED(enum.IntEnum):
+    ATTACHMENT = 1454
+    OBJECT = 1453
+    OBJECTLINK = 1452
 
 
 class ITEMTYPE(enum.IntEnum):
@@ -110,3 +105,14 @@ class ITEMTYPE(enum.IntEnum):
     USERID = 1792  # user ID name.
     VIEWMAPDATA = 18  # saved ViewMap dataset; non-Computable; canonical form.
     VIEWMAPLAYOUT = 19  # saved ViewMap layout; non-Computable; canonical form.
+
+
+class RTCONV(enum.Flag):
+    """Rich Text conversion types"""
+
+    NONE = enum.auto()
+    TEXT = enum.auto()
+    FORMATTED = enum.auto()
+    UNFORMATTED = enum.auto()
+    DEFAULT = NONE
+    # TODO: XML, HTML
