@@ -1,6 +1,6 @@
 [build-system]
-requires = ["flit"]
-build-backend = "flit.buildapi"
+requires = ["flit_core >=3.2,<4"]
+build-backend = "flit_core.buildapi"
 
 [tool.flit.metadata]
 module = "noteslib"
@@ -9,7 +9,7 @@ author-email = "bfollek@gmail.com"
 maintainer = "Marcelo Huerta"
 maintainer-email = "richieadler@gmail.com"
 description-file = "README.md"
-requires-python = "~=3.0"
+requires-python = ">=3.7"
 requires = [
 	"pywin32",
 ]
