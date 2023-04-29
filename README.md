@@ -1,9 +1,32 @@
 # NotesLib
 
-NotesLib is a library of Python classes for manipulating Lotus
+NotesLib is a library of Python classes for manipulating (Lotus/IBM/HCL)
 Notes/Domino objects via COM.
 
 NotesLib was created by Robert Follek, and the current maintainer is Marcelo Huerta.
+
+*(Please don't ask Robert about NotesLib, though: he released the code in text form some
+time ago, he doesn't work with Notes any more and the whole idea of updating the code 
+and uploading it to PyPI can only be blamed on Marcelo. Who is not working actively with
+Notes at this time, so... responses can be slow.)*
+
+NotesLib **depends on a proper installation and configuration of a Notes client on a 
+Windows computer**, as it interacts with the COM server that is part of a Notes installation
+for Windows and it expects a complete local configuration in place.
+
+The Python version to be installed should be 32- or 64-bits depending on the version of 
+the underlying COM server providing the objects accessed by the library. This means that for
+a Notes client up to version 11.x, you should install a 32-bit Python. Version 12.x is the first
+of the Notes clients to be 64-bit, so the COM server is also, and you need a 64-bit Python to
+interact with it.
+
+-----
+
+**We've received information that the COM server in version 12.0 and 12.0.1 had bugs and HCL
+solved the specific problems found in version 12.0.2.** *Caveat emptor*: any underlying problems
+with the COM server are beyond the scope of this library.
+
+-----
 
 The NotesLib classes correspond to the standard LotusScript classes; they
 support all the standard properties and methods. The NotesLib classes have
