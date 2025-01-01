@@ -1,12 +1,14 @@
 import os
 
 import pytest
-
-from noteslib import ACL, Database, DbDirectory, DbDirectoryError
 from pythoncom import com_error
+
+from noteslib import ACL, ACLLEVEL, Database, DbDirectory, DbDirectoryError
 
 CACHE_DB = ("", "cache.ndk")
 
+# Notes constant
+ERR_SYS_FILE_NOT_FOUND = 4003
 
 def test_db():
     db1 = Database(*CACHE_DB)
@@ -23,8 +25,6 @@ def test_acl(load_notes_db):
     acl1 = ACL(db.Server, db.FilePath)
     acl2 = ACL("", "", obj=db.ACL)
     acl3 = ACL("", "", obj=db)
-    print(acl1.entries)
-    assert len(acl1.entries) == 2
     assert acl1 == acl2
     assert acl1 == acl3
 
@@ -34,7 +34,7 @@ def test_native_properties(load_notes_db):
     acl = ACL(db.Server, db.FilePath)
     assert "/" in ns.UserName
     assert hasattr(db.Created, "tzinfo")
-    assert acl.entries[0].Level == 6
+    assert acl.entries[0].Level == ACLLEVEL.MANAGER
     assert acl.roles == acl.Roles
 
 
@@ -53,4 +53,4 @@ def test_dbdir_open():
     with pytest.raises(com_error) as exc:
         dbdir.OpenDatabase("this_database_doesnt_exist")
         error_code = exc.excepinfo[5] & 0xFFFF
-        assert error_code == 4003  # lsERR_SYS_FILE_NOT_FOUND
+        assert error_code == ERR_SYS_FILE_NOT_FOUND

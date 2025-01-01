@@ -2,6 +2,7 @@
 Document - wrapper around a NotesDocument.
 
 """
+
 import datetime
 import json
 import re
@@ -14,6 +15,8 @@ from win32com.client import CDispatch
 from .core import NotesLibObject, Session
 from .enums import DATECONV, ITEMTYPE, RTCONV
 
+MIN_NOTES_YEAR = 1900  # No valid Notes dates exist before this year
+
 
 def _c(ndt):
     return datetime.datetime.combine(ndt.date(), ndt.time(), ndt.tzinfo)
@@ -24,13 +27,13 @@ def _c_local(ndt):
 
 
 def _fnstr(ndt, *, zone):
-    if ndt.year < 1900:
+    if ndt.year < MIN_NOTES_YEAR:
         return None
     return w.Instant.from_timestamp(ndt.timestamp()).to_tz(zone).py_datetime().isoformat()
 
 
 def _fndt(ndt, *, zone):
-    if ndt.year < 1900:
+    if ndt.year < MIN_NOTES_YEAR:
         return None
     return w.Instant.from_timestamp(ndt.timestamp).to_tz(zone).py_datetime()
 
@@ -66,10 +69,7 @@ class Document(NotesLibObject):
     def __eq__(self, other):
         docself = self.notesobj
         docother = other.notesobj
-        return (
-            docself.ParentDatabase.ReplicaID == docother.ParentDatabase.ReplicaID
-            and docself.UniversalID == docother.UniversalID
-        )
+        return docself.ParentDatabase.ReplicaID == docother.ParentDatabase.ReplicaID and docself.UniversalID == docother.UniversalID
 
     def __getitem__(self, name):
         """Get item value by name, as index"""
@@ -128,12 +128,8 @@ class Document(NotesLibObject):
         if isinstance(item, str):
             item = doc.GetFirstItem(item)
 
-        if not isinstance(convert_date, DATECONV) and not str(convert_date).startswith(
-            "tz:"
-        ):
-            raise ValueError(
-                'Incorrect value for parameter "convert_date": {convert_date!r}'
-            )
+        if not isinstance(convert_date, DATECONV) and not str(convert_date).startswith("tz:"):
+            raise ValueError('Incorrect value for parameter "convert_date": {convert_date!r}')
 
         if item is None:
             return default
@@ -154,10 +150,7 @@ class Document(NotesLibObject):
             except OSError as err:
                 db = doc.Parent
                 unid = doc.UniversalID
-                raise OSError(
-                    f"{db.Server}!!{db.FilePath}: {unid} "
-                    'Field "{item.Name}": Problem with values: {item.Values}'
-                ) from err
+                raise OSError(f"{db.Server}!!{db.FilePath}: {unid} " 'Field "{item.Name}": Problem with values: {item.Values}') from err
         else:
             lst = item.Values
 
@@ -178,15 +171,9 @@ class Document(NotesLibObject):
                 func = _c_local
             elif (sconv := str(convert_date)).startswith("tz:"):
                 _, zone, conv = (sconv + ":").split(":")[:3]
-                func = (
-                    partial(_fnstr, zone=zone)
-                    if conv == "str"
-                    else partial(_fndt, zone=zone)
-                )
+                func = partial(_fnstr, zone=zone) if conv == "str" else partial(_fndt, zone=zone)
             else:
-                raise ValueError(
-                    f"Value {convert_date!r} for parameter convert_date is not valid"
-                )
+                raise ValueError(f"Value {convert_date!r} for parameter convert_date is not valid")
             # Convert all dates (including ranges returned as lists)
             lst = item.GetValueDateTimeArray()
             if "DateRange" in repr(lst[0]):
@@ -201,7 +188,7 @@ class Document(NotesLibObject):
                 lst = [func(_.LSGMTTime) for _ in lst]
         return lst
 
-    def dict(
+    def asdict(
         self,
         *,
         omit_special=False,
@@ -235,17 +222,13 @@ class Document(NotesLibObject):
                     if compact and isinstance(ret[nom], list) and len(ret[nom]) == 1:
                         ret[nom] = ret[nom][0]
             except Exception as e:
-                raise RuntimeError(
-                    f"** Problem with item {nom!r} in document {doc.UniversalID}"
-                ) from e
+                raise RuntimeError(f"** Problem with item {nom!r} in document {doc.UniversalID}") from e
         return ret
 
     def json(self, *, omit_special=False, **kwargs: Any):
         """Return a JSON version of the ``dict()`` method"""
         return json.dumps(
-            self.dict(
-                omit_special=omit_special, convert_date="tz:GMT:str", compact=True
-            ),
+            self.asdict(omit_special=omit_special, convert_date="tz:GMT:str", compact=True),
             **kwargs,
         )
 

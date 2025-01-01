@@ -2,7 +2,8 @@
 Database related classes
 """
 
-from typing import Any, Dict, Iterable
+from collections.abc import Iterable
+from typing import Any, Dict
 
 from .core import NotesLibObject, Session
 from .enums import ACLFLAGS, ACLLEVEL, ACLTYPE, DB
@@ -70,9 +71,7 @@ class Database(NotesLibObject):
         if obj:
             server, db_path = obj.Server, obj.FilePath
         cache_key = (server.lower(), db_path.lower())
-        cached_handle = self.__handleCache.get(
-            cache_key, self._get_db(cache_key, password)
-        )
+        cached_handle = self.__handleCache.get(cache_key, self._get_db(cache_key, password))
         super().__init__(obj=cached_handle)
 
     def _get_db(self, cache_key, password):
@@ -130,15 +129,12 @@ class ACL(NotesLibObject):
         if obj is None:
             db = Database(server, db_path, password)
             handle = db.ACL
+        elif hasattr(obj, "Title"):  # Database
+            handle = obj.ACL
+        elif hasattr(obj, "GetFirstEntry"):  # ACL
+            handle = obj
         else:
-            if hasattr(obj, "Title"):  # Database
-                handle = obj.ACL
-            elif hasattr(obj, "GetFirstEntry"):  # ACL
-                handle = obj
-            else:
-                raise ValueError(
-                    "The object passed is neither NotesACL nor NotesDatabase"
-                )
+            raise ValueError("The object passed is neither NotesACL nor NotesDatabase")
         super().__init__(obj=handle)
 
     def __str__(self):
@@ -211,10 +207,7 @@ class ACLEntry(NotesLibObject):
     @property
     def flags(self):
         """Returns a list of the ACLEntry flags, translated to strings."""
-        return ", ".join(
-            _.replace("_", " ").title()
-            for _ in str(self._flags).split(".")[1].split("|")
-        )
+        return ", ".join(_.replace("_", " ").title() for _ in str(self._flags).split(".")[1].split("|"))
 
     @property
     def roles(self):
@@ -273,9 +266,7 @@ class DbDirectory(NotesLibObject):
     def __init__(self, server: str = "", obj=None):
         if obj is not None:
             if not hasattr(obj, "CreateDatabase"):
-                raise DbDirectoryError(
-                    "The object passed to initialize is not a valid NotesDbDirectory"
-                )
+                raise DbDirectoryError("The object passed to initialize is not a valid NotesDbDirectory")
         else:
             ns = Session()
             obj = ns.GetDbDirectory(server)

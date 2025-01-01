@@ -1,3 +1,5 @@
+# ruff: noqa: E701
+
 import datetime
 
 import pytest
@@ -9,7 +11,7 @@ from noteslib.enums import DATECONV
 
 def test_doc(doc0):
     doc = Document(obj=doc0)
-    dict_doc = doc.dict()
+    dict_doc = doc.asdict()
     with check: assert dict_doc["Form"] == ["Test"]
     with check: assert dict_doc["TestDateGMT"][0] == datetime.datetime(2001, 1, 1, 12, 34, 56, tzinfo=datetime.timezone.utc)
     with check: assert "$Revisions" not in doc.json(omit_special=True)
@@ -51,7 +53,7 @@ def test_doc_dates(load_notes_db, doc0):
 
 
 def test_doc_dict(doc0):
-    dd = doc0.dict(convert_date="tz:GMT:str")
+    dd = doc0.asdict(convert_date="tz:GMT:str")
     with check: assert dd["TestDateGMT"][0] == "2001-01-01T12:34:56+00:00"
     with check: assert "$FILE" not in dd
     with check: assert "$Revisions" in dd

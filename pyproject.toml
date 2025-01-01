@@ -51,25 +51,28 @@ platforms = ["windows"]
 description = "Syntax and format checking"
 python = "3.9-32"
 dependencies = [
-	"black",
-	"isort",
-	"pylint",
+	"ruff>=0.8.4",
 	"mypy",
 ]
 
 [tool.hatch.envs.lint.scripts]
 check = [
-	"- isort --check-only --diff src",
-	"- pylint src",
-	"- black --check --diff src",
+	"- ruff check --diff src",
+	"- ruff format --diff src",
 	"- mypy src"
+]
+check-tests = [
+	"- ruff check tests",
+	"- ruff format --diff tests",
 ]
 check-types = [
 	"mypy --disallow-untyped-calls --disallow-untyped-defs --disallow-incomplete-defs src"
 ]
 fmt = [
-	"isort src",
-	"black src",
+	"ruff format src",
+]
+fmt-tests = [
+	"ruff format tests",
 ]
 
 [tool.pylint]
@@ -82,3 +85,21 @@ module = [
 	"win32com.*",
 ]
 ignore_missing_imports = true
+
+[tool.ruff]
+line-length=140
+indent-width=4
+target-version="py39"
+
+[tool.ruff.lint]
+select = [
+	"RUF",          # Ruff own rules
+	"E", "W",       # pycodestyle
+	"I",            # isort
+	"PL",           # pylint
+	"B",            # flake8-bugbear
+	"A",            # flake8-builtins
+	"DTZ",          # flake8-datetimez
+	"UP",           # pyupgrade
+	"ERA",          # eradicate
+]

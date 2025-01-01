@@ -1,6 +1,7 @@
 """
 Main classes to interact with Notes, and other useful classes available in the initial version of NotesLib
 """
+
 from typing import Any, Dict
 
 import win32com.client

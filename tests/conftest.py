@@ -3,13 +3,16 @@ import wmi
 from lxml import etree
 
 from noteslib import Document, DocumentCollection, Session
-from noteslib.enums import EMBED
+from noteslib.enums import ACLLEVEL, EMBED
 
 DBSERVER = ''
 DBPATH = '__test__.nsf'
 
-PREFIX = u'http://www.lotus.com/dxl'
+PREFIX = 'http://www.lotus.com/dxl'
 NS = {'n': PREFIX}
+
+# Notes constants
+DXLIMPORTOPTION_REPLACE_ELSE_IGNORE = 5
 
 NOTES_EXES = ["nlnotes.exe", "notes.exe", "notes2.exe"]
 WMI = wmi.WMI()
@@ -22,7 +25,7 @@ def fixview(ns, vw, startcol, endcol):
         db = vw.Parent
         exporter = ns.CreateDXLExporter()
         importer = ns.CreateDXLImporter()
-        importer.DesignImportOption = 5  # DXLIMPORTOPTION_REPLACE_ELSE_IGNORE
+        importer.DesignImportOption = DXLIMPORTOPTION_REPLACE_ELSE_IGNORE
         parser = etree.XMLParser(remove_blank_text=True)
         docvw = db.GetDocumentByUNID(vw.NotesURL.split('/')[-1].split('?')[0])
         tree = etree.fromstring(exporter.Export(docvw), parser)
@@ -71,18 +74,52 @@ def load_notes_db():
         dbdir = ns.GetDbDirectory('')
         db = dbdir.CreateDatabase(DBPATH)
         assert db, 'Could not create database'
-    acl = db.ACL
-    if "[TestRole]" not in acl.Roles:
-        acl.AddRole("TestRole")
-    acle = acl.GetEntry('-Default-')
-    if not acle:
-        acle = acl.CreateACLEntry('-Default-', 6)
-    acle.EnableRole("TestRole")
-    acle = acl.GetEntry('John Doe/Test')
-    if not acle:
-        acle = acl.CreateACLEntry('John Doe/Test', 6)
-        acle.Level = 3
-    acl.Save()
+    set_acl(db)
+    create_views(db, ns)
+    create_docs(db, ns)
+    set_title(db)
+    yield ns, db
+    del ns, db
+
+
+def set_title(db):
+    # Set title.
+    # Notes can be a little stubborn if you want to set the title programatically
+    # and also add an inheritance value. Three times do the trick.
+    title = 'Test DB for noteslib module'
+    noteid = 'FFFF0010'
+    for _ in range(3):
+        doc = db.GetDocumentByID(noteid)
+        doc.ReplaceItemValue('$TITLE', title + chr(10) + '#2noteslib_test')
+        doc.Save(1, 0, 1)
+        del doc
+
+
+def create_docs(db, ns):
+    # Specific sets of documents needed
+    doc = get_or_create_doc(db, [0, 0, 0])
+    doc.ReplaceItemValue('Value', 'First!')
+    dt = ns.CreateDateTime("Today 12:00")
+    localzone = dt.LocalTime.split(" ")[-1]
+    dt = ns.CreateDateTime("January 1, 2001 12:34:56 " + localzone)
+    doc.ReplaceItemValue("TestDate", dt)
+    dt = ns.CreateDateTime("January 1, 2001 12:34:56 GMT")
+    doc.ReplaceItemValue("TestDateGMT", dt)
+    if not doc.HasItem("Body2"):
+        body = doc.CreateRichTextItem("Body2")
+        body.EmbedObject(EMBED.ATTACHMENT, "", __file__)
+    doc.Save(1, 0, 1)
+    docs = vw.GetAllDocumentsByKey('CatTest', True)
+    if docs.Count == 0:
+        for i in range(1, 11):
+            for j in range(1, 11):
+                key = ['CatTest', f'Cat1_{i:02d}', f'Cat2_{j:02d}']
+                doc = get_or_create_doc(db, key)
+                doc.ReplaceItemValue('Value', '-'.join(key))
+                doc.Save(1, 0, 1)
+
+
+def create_views(db, ns):
     vw = db.GetView('($All)')
     if not vw:
         vw = db.CreateView("($All)", '', None, True)
@@ -116,41 +153,20 @@ def load_notes_db():
     vw2.SelectionFormula = vw1.SelectionFormula
     fixview(ns, vw2, 1, 2)
 
-    # Specific sets of documents needed
-    doc = get_or_create_doc(db, [0, 0, 0])
-    doc.ReplaceItemValue('Value', 'First!')
-    dt = ns.CreateDateTime("Today 12:00")
-    localzone = dt.LocalTime.split(" ")[-1]
-    dt = ns.CreateDateTime("January 1, 2001 12:34:56 " + localzone)
-    doc.ReplaceItemValue("TestDate", dt)
-    dt = ns.CreateDateTime("January 1, 2001 12:34:56 GMT")
-    doc.ReplaceItemValue("TestDateGMT", dt)
-    if not doc.HasItem("Body2"):
-        body = doc.CreateRichTextItem("Body2")
-        body.EmbedObject(EMBED.ATTACHMENT, "", __file__)
-    doc.Save(1, 0, 1)
 
-    docs = vw.GetAllDocumentsByKey('CatTest', True)
-    if docs.Count == 0:
-        for i in range(1, 11):
-            for j in range(1, 11):
-                key = ['CatTest', f'Cat1_{i:02d}', f'Cat2_{j:02d}']
-                doc = get_or_create_doc(db, key)
-                doc.ReplaceItemValue('Value', '-'.join(key))
-                doc.Save(1, 0, 1)
-
-    # Set title.
-    # Notes can be a little stubborn if you want to set the title programatically
-    # and also add an inheritance value. Three times do the trick.
-    title = 'Test DB for noteslib module'
-    noteid = 'FFFF0010'
-    for i in range(3):
-        doc = db.GetDocumentByID(noteid)
-        doc.ReplaceItemValue('$TITLE', title + chr(10) + '#2noteslib_test')
-        doc.Save(1, 0, 1)
-        del doc
-    yield ns, db
-    del ns, db
+def set_acl(db):
+    acl = db.ACL
+    if "[TestRole]" not in acl.Roles:
+        acl.AddRole("TestRole")
+    acle = acl.GetEntry('-Default-')
+    if not acle:
+        acle = acl.CreateACLEntry('-Default-', 6)
+    acle.EnableRole("TestRole")
+    acle = acl.GetEntry('John Doe/Test')
+    if not acle:
+        acle = acl.CreateACLEntry('John Doe/Test', 6)
+        acle.Level = ACLLEVEL.AUTHOR
+    acl.Save()
 
 
 @pytest.fixture(scope='function')
