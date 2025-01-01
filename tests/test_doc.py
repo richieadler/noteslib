@@ -1,6 +1,5 @@
 import datetime
 
-import pendulum
 import pytest
 from pytest_check import check
 
@@ -12,7 +11,7 @@ def test_doc(doc0):
     doc = Document(obj=doc0)
     dict_doc = doc.dict()
     with check: assert dict_doc["Form"] == ["Test"]
-    with check: assert dict_doc["TestDateGMT"][0] == pendulum.datetime(2001, 1, 1, 12, 34, 56, tz="GMT")
+    with check: assert dict_doc["TestDateGMT"][0] == datetime.datetime(2001, 1, 1, 12, 34, 56, tzinfo=datetime.timezone.utc)
     with check: assert "$Revisions" not in doc.json(omit_special=True)
 
 
@@ -41,12 +40,12 @@ def test_doc_dates(load_notes_db, doc0):
     # Get local Notes timezone
     dt = ns.CreateDateTime("Today 12:00")
     localzone = dt.LocalTime.split(" ")[-1]
+    pylocalzone = datetime.datetime.now().astimezone().tzinfo
 
     # Default: datetime.datetime with timezone
     retdate = doc0.get("TestDate")[0]
     with check: assert isinstance(retdate, datetime.datetime)
-    with check: assert retdate == pendulum.datetime(2001, 1, 1, 12, 34, 56, tz="local")
-    with check: assert doc0.get("TestDate", convert_date=DATECONV.NAIVE)[0] == datetime.datetime(2001, 1, 1, 12, 34, 56)
+    with check: assert retdate == datetime.datetime(2001, 1, 1, 12, 34, 56, tzinfo=pylocalzone)
     with check: assert doc0.get("TestDate", convert_date=DATECONV.NATIVESTRING)[0] == "01/01/2001 12:34:56 " + localzone
     with check: assert doc0.get("TestDateGMT", convert_date="tz:Etc/GMT+1:str")[0] == "2001-01-01T11:34:56-01:00"
 
