@@ -19,10 +19,6 @@ def _c(ndt):
     return datetime.datetime.combine(ndt.date(), ndt.time(), ndt.tzinfo)
 
 
-def _c_naive(ndt):
-    return _c(p.instance(ndt).in_tz("local").replace(tzinfo=None))
-
-
 def _c_local(ndt):
     return _c(p.instance(ndt).in_tz("local"))
 
@@ -106,10 +102,6 @@ class Document(NotesLibObject):
 
             * DATECONV.LOCAL returns Python datetime(s) converted to the local time
 
-            * DATECONV.NAIVE returns Python datetime(s) with the same date/time information
-              as the original DATETIME variant converted to local time, but without
-              zone information
-
             * DATECONV.NATIVE returns a list of ``NotesDateTime`` or ``NotesDateTimeRange`` values
 
             * DATECONV.NATIVESTRING returns a list of the date(s) as returned by the @Text function
@@ -184,8 +176,6 @@ class Document(NotesLibObject):
                 func = _c
             elif convert_date == DATECONV.LOCAL:
                 func = _c_local
-            elif convert_date == DATECONV.NAIVE:
-                func = _c_naive
             elif (sconv := str(convert_date)).startswith("tz:"):
                 _, zone, conv = (sconv + ":").split(":")[:3]
                 func = (
