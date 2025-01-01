@@ -8,7 +8,7 @@ import re
 from functools import partial
 from typing import Any, Union
 
-import pendulum as p
+import whenever as w
 from win32com.client import CDispatch
 
 from .core import NotesLibObject, Session
@@ -20,19 +20,19 @@ def _c(ndt):
 
 
 def _c_local(ndt):
-    return _c(p.instance(ndt).in_tz("local"))
+    return w.SystemDateTime.from_timestamp(ndt.timestamp()).py_datetime()
 
 
 def _fnstr(ndt, *, zone):
     if ndt.year < 1900:
         return None
-    return p.instance(ndt).in_tz(zone).to_iso8601_string()
+    return w.Instant.from_timestamp(ndt.timestamp()).to_tz(zone).py_datetime().isoformat()
 
 
 def _fndt(ndt, *, zone):
     if ndt.year < 1900:
         return None
-    return _c(p.instance(ndt).in_tz(zone))
+    return w.Instant.from_timestamp(ndt.timestamp).to_tz(zone).py_datetime()
 
 
 class Document(NotesLibObject):
