@@ -6,8 +6,11 @@ from collections.abc import Iterable
 from typing import ClassVar
 
 from .core import NotesLibObject, Session
+from .doc import Document
 from .enums import ACLFLAGS, ACLLEVEL, ACLTYPE, DB
 from .exceptions import DatabaseError, DbDirectoryError
+
+UNID_LEN = 32
 
 
 class Database(NotesLibObject):
@@ -66,10 +69,12 @@ class Database(NotesLibObject):
 
     # TODO: Wrap Database.ACL with our own ACL
 
-    def __init__(self, server, db_path, password=None, *, obj=None):
+    def __init__(self, server=None, db_path=None, password=None, *, obj=None):
         """Set the db handle, either from cache or via the COM connection; or use the passed NotesDatabase"""
         if obj:
             server, db_path = obj.Server, obj.FilePath
+        elif server is None or db_path is None:
+            raise ValueError("server and db_path are required if no object is passed")
         cache_key = (server.lower(), db_path.lower())
         cached_handle = self.__handleCache.get(cache_key, self._get_db(cache_key, password))
         super().__init__(obj=cached_handle)
@@ -83,6 +88,19 @@ class Database(NotesLibObject):
             return obj
         except Exception as exc:
             raise DatabaseError(self.__DB_ERROR % cache_key) from exc
+
+    def __getitem__(self, item: str):
+        """Retrieve document by UNID or NoteID"""
+
+        if len(item) == UNID_LEN:  # UNID
+            doc = self.notesobj.GetDocumentByUNID(item)
+            if doc is None:
+                raise KeyError(f"Document with UNID {item!r} not found")
+        else:
+            doc = self.notesobj.GetDocumentByID(item)
+            if doc is None:
+                raise KeyError(f"Document with NoteID {item!r} not found")
+        return Document(obj=doc)
 
 
 class ACL(NotesLibObject):
