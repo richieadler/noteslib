@@ -30,26 +30,28 @@ classifiers = [
 [tool.hatch.version]
 path = "src/noteslib/__init__.py"
 
-[tool.hatch.envs.test]
+[tool.hatch.envs.hatch-test]
 platforms = ["windows"]
 description = "Testing with pytest, including coverage"
-python = "3.9-32"
-dependencies = [
+extra-dependencies = [
 	"lxml",
-	"pytest",
 	"pytest-cov",
 	"pytest-check",
 	"wmi",
 ]
 
-[tool.hatch.envs.test.scripts]
-test = "pytest --cov=src/noteslib --cov-report=term-missing tests"
-test-v = "pytest -vv --cov=src/noteslib --cov-report=term-missing tests"
+[[tool.hatch.envs.hatch-test.matrix]]
+python = ["3.11-32", "3.10-32"]
+
+[tool.hatch.envs.hatch-test.scripts]
+run = "pytest{env:HATCH_TEST_ARGS:} {args}"
+run-cov = "pytest{env:HATCH_TEST_ARGS:} {args} --cov=src/noteslib --cov-report=term-missing tests"
+cov-combine = "coverage combine"
+cov-report = "coverage report"
 
 [tool.hatch.envs.lint]
 platforms = ["windows"]
 description = "Syntax and format checking"
-python = "3.9-32"
 dependencies = [
 	"ruff>=0.8.4",
 	"mypy",
@@ -57,7 +59,7 @@ dependencies = [
 
 [tool.hatch.envs.lint.scripts]
 check = [
-	"- ruff check --diff src",
+	"- ruff check src",
 	"- ruff format --diff src",
 	"- mypy src"
 ]
@@ -75,10 +77,6 @@ fmt-tests = [
 	"ruff format tests",
 ]
 
-[tool.pylint]
-good-names = "s,nc,ns,db,ix"
-max-line-length = 140
-
 [[tool.mypy.overrides]]
 
 module = [
@@ -95,6 +93,7 @@ target-version="py39"
 select = [
 	"RUF",          # Ruff own rules
 	"E", "W",       # pycodestyle
+    "N",            # pep8-naming
 	"I",            # isort
 	"PL",           # pylint
 	"B",            # flake8-bugbear

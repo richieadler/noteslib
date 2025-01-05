@@ -75,8 +75,8 @@ def load_notes_db():
         db = dbdir.CreateDatabase(DBPATH)
         assert db, 'Could not create database'
     set_acl(db)
-    create_views(db, ns)
-    create_docs(db, ns)
+    create_views(ns, db)
+    create_docs(ns, db)
     set_title(db)
     yield ns, db
     del ns, db
@@ -95,7 +95,7 @@ def set_title(db):
         del doc
 
 
-def create_docs(db, ns):
+def create_docs(ns, db):
     # Specific sets of documents needed
     doc = get_or_create_doc(db, [0, 0, 0])
     doc.ReplaceItemValue('Value', 'First!')
@@ -109,6 +109,7 @@ def create_docs(db, ns):
         body = doc.CreateRichTextItem("Body2")
         body.EmbedObject(EMBED.ATTACHMENT, "", __file__)
     doc.Save(1, 0, 1)
+    vw = db.GetView("($All)")
     docs = vw.GetAllDocumentsByKey('CatTest', True)
     if docs.Count == 0:
         for i in range(1, 11):
@@ -119,7 +120,7 @@ def create_docs(db, ns):
                 doc.Save(1, 0, 1)
 
 
-def create_views(db, ns):
+def create_views(ns, db):
     vw = db.GetView('($All)')
     if not vw:
         vw = db.CreateView("($All)", '', None, True)
