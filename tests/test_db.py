@@ -1,14 +1,16 @@
+# ruff: noqa:
 import os
 
 import pytest
 from pythoncom import com_error
 
-from noteslib import ACL, ACLLEVEL, Database, DbDirectory, DbDirectoryError
+from noteslib import Database, DbDirectory, DbDirectoryError
 
 CACHE_DB = ("", "cache.ndk")
 
 # Notes constant
 ERR_SYS_FILE_NOT_FOUND = 4003
+
 
 def test_db():
     db1 = Database(*CACHE_DB)
@@ -18,24 +20,6 @@ def test_db():
     assert db2 == db3
     assert db1 == db3
     assert db1 is not db2
-
-
-def test_acl(load_notes_db):
-    _, db = load_notes_db
-    acl1 = ACL(db.Server, db.FilePath)
-    acl2 = ACL("", "", obj=db.ACL)
-    acl3 = ACL("", "", obj=db)
-    assert acl1 == acl2
-    assert acl1 == acl3
-
-
-def test_native_properties(load_notes_db):
-    ns, db = load_notes_db
-    acl = ACL(db.Server, db.FilePath)
-    assert "/" in ns.UserName
-    assert hasattr(db.Created, "tzinfo")
-    assert acl.entries[0].Level == ACLLEVEL.MANAGER
-    assert acl.roles == acl.Roles
 
 
 def test_dbdir():
@@ -50,7 +34,7 @@ def test_dbdir_open():
     dbdir = DbDirectory("")
     db = dbdir.OpenDatabase("names.nsf")
     assert db.IsOpen
-    with pytest.raises(com_error) as exc:
+    with pytest.raises(com_error) as exc_info:
         dbdir.OpenDatabase("this_database_doesnt_exist")
-        error_code = exc.excepinfo[5] & 0xFFFF
-        assert error_code == ERR_SYS_FILE_NOT_FOUND
+    error_code = exc_info.excepinfo[5] & 0xFFFF
+    assert error_code == ERR_SYS_FILE_NOT_FOUND

@@ -20,6 +20,98 @@ if not any(WMI.Win32_Process(Name=n) for n in NOTES_EXES):
     raise RuntimeError("A fully configured and running Notes client is needed for the tests to work")
 
 
+@pytest.fixture(scope='session')
+def load_notes_db():
+    """Return NotesSession and NotesDatabase test objects"""
+    ns = Session()
+    db = ns.GetDatabase(DBSERVER, DBPATH, False)
+    if not db:
+        dbdir = ns.GetDbDirectory('')
+        db = dbdir.CreateDatabase(DBPATH)
+        assert db, 'Could not create database'
+    set_acl(db)
+    create_views(ns, db)
+    set_title(db)
+    yield ns, db
+    del ns, db
+
+
+@pytest.fixture
+def db_with_doc0(load_notes_db):
+    """Add 'doc 0' to DB and then remove it"""
+    ns, db = load_notes_db
+    doc = get_or_create_doc(db, [0, 0, 0])
+    doc.ReplaceItemValue('Value', 'First!')
+    dt = ns.CreateDateTime("Today 12:00")
+    localzone = dt.LocalTime.split(" ")[-1]
+    dt = ns.CreateDateTime("January 1, 2001 12:34:56 " + localzone)
+    doc.ReplaceItemValue("TestDate", dt)
+    dt = ns.CreateDateTime("January 1, 2001 12:34:56 GMT")
+    doc.ReplaceItemValue("TestDateGMT", dt)
+    if not doc.HasItem("Body2"):
+        body = doc.CreateRichTextItem("Body2")
+        body.EmbedObject(EMBED.ATTACHMENT, "", __file__)
+    doc.Save(1, 0, 1)
+    yield db
+    doc.Remove(True)
+
+
+@pytest.fixture
+def db_with_doc_cat(load_notes_db):
+    """Add docs with cat to DB and then remove them"""
+    _, db = load_notes_db
+    docs = []
+    for i in range(1, 11):
+        for j in range(1, 11):
+            key = ['CatTest', f'Cat1_{i:02d}', f'Cat2_{j:02d}']
+            doc = get_or_create_doc(db, key)
+            doc.ReplaceItemValue('Value', '-'.join(key))
+            doc.Save(1, 0, 1)
+            docs.append(doc)
+    yield db
+    for doc in docs:
+        doc.Remove(True)
+
+
+@pytest.fixture
+def temp_doc(load_notes_db):
+    _, db = load_notes_db
+    doc = db.CreateDocument()
+    yield doc
+    doc.Remove(True)
+
+
+@pytest.fixture
+def doc0(db_with_doc0):
+    db = db_with_doc0
+    vw = db.GetView("CatView")
+    doc = vw.GetDocumentByKey([0, 0, 0])
+    return Document(obj=doc)
+
+
+@pytest.fixture
+def docs0(db_with_doc0):
+    db = db_with_doc0
+    vw = db.GetView("CatView")
+    docs = vw.GetAllDocumentsByKey([0, 0, 0])
+    return DocumentCollection(obj=docs)
+
+
+@pytest.fixture
+def docs_cat(db_with_doc_cat):
+    docs = db_with_doc_cat.AllDocuments
+    return DocumentCollection(obj=docs)
+
+
+@pytest.fixture
+def all_docs(load_notes_db):
+    _, db = load_notes_db
+    return DocumentCollection(obj=db.AllDocuments)
+
+
+# Auxiliary functions
+
+
 def fixview(ns, vw, startcol, endcol):
     if not vw.Columns[0].IsIcon:
         db = vw.Parent
@@ -63,23 +155,6 @@ def get_or_create_doc(db, key):
             body.AppendText("Test")
         doc.Save(1, 0, 1)
     return doc
-
-
-@pytest.fixture(scope='session')
-def load_notes_db():
-    """Return NotesSession and NotesDatabase test objects"""
-    ns = Session()
-    db = ns.GetDatabase(DBSERVER, DBPATH, False)
-    if not db:
-        dbdir = ns.GetDbDirectory('')
-        db = dbdir.CreateDatabase(DBPATH)
-        assert db, 'Could not create database'
-    set_acl(db)
-    create_views(ns, db)
-    create_docs(ns, db)
-    set_title(db)
-    yield ns, db
-    del ns, db
 
 
 def set_title(db):
@@ -168,36 +243,3 @@ def set_acl(db):
         acle = acl.CreateACLEntry('John Doe/Test', 6)
         acle.Level = ACLLEVEL.AUTHOR
     acl.Save()
-
-
-@pytest.fixture(scope='function')
-def temp_doc(load_notes_db):
-    _, db = load_notes_db
-    doc = db.CreateDocument()
-    yield doc
-    doc.Remove(True)
-
-
-@pytest.fixture(scope='function')
-def doc0(load_notes_db):
-    _, db = load_notes_db
-    vw = db.GetView("CatView")
-    doc = vw.GetDocumentByKey([0, 0, 0])
-    yield Document(obj=doc)
-
-
-@pytest.fixture(scope='function')
-def docs0(load_notes_db):
-    _, db = load_notes_db
-    vw = db.GetView("CatView")
-    docs = vw.GetAllDocumentsByKey([0, 0, 0])
-    docs2 = db.Search('Value = "CatTest-Cat1_10-Cat2_10"', None, 0)
-    doc2 = docs2.GetFirstDocument()
-    docs.AddDocument(doc2)
-    yield DocumentCollection(obj=docs)
-
-
-@pytest.fixture(scope='function')
-def all_docs(load_notes_db):
-    _, db = load_notes_db
-    yield DocumentCollection(obj=db.AllDocuments)

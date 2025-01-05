@@ -41,7 +41,7 @@ extra-dependencies = [
 ]
 
 [[tool.hatch.envs.hatch-test.matrix]]
-python = ["3.11-32", "3.10-32"]
+python = ["3.11-32", "3.10-32", "3.9-32"]
 
 [tool.hatch.envs.hatch-test.scripts]
 run = "pytest{env:HATCH_TEST_ARGS:} {args}"
@@ -59,12 +59,12 @@ dependencies = [
 
 [tool.hatch.envs.lint.scripts]
 check = [
-	"- ruff check src",
+	"ruff check src",
+	"mypy src",
 	"- ruff format --diff src",
-	"- mypy src"
 ]
 check-tests = [
-	"- ruff check tests",
+	"ruff check tests --extend-select PT",
 	"- ruff format --diff tests",
 ]
 check-types = [
@@ -78,7 +78,6 @@ fmt-tests = [
 ]
 
 [[tool.mypy.overrides]]
-
 module = [
 	"win32com.*",
 ]
@@ -102,3 +101,6 @@ select = [
 	"UP",           # pyupgrade
 	"ERA",          # eradicate
 ]
+
+[tool.ruff.format]
+quote-style = "preserve"
