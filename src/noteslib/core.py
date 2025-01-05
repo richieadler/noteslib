@@ -2,7 +2,7 @@
 Main classes to interact with Notes, and other useful classes available in the initial version of NotesLib
 """
 
-from typing import Any, Dict
+from typing import ClassVar
 
 import win32com.client
 
@@ -62,7 +62,7 @@ class Session(NotesLibObject):  # pylint: disable=too-few-public-methods
     and you only have to establish a password once.
     """
 
-    _shared_state: Dict[str, Any] = {}
+    _shared_state: ClassVar = {}
 
     def __init__(self, password=None):
         self.__dict__ = self._shared_state

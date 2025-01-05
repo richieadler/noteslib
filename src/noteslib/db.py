@@ -3,7 +3,7 @@ Database related classes
 """
 
 from collections.abc import Iterable
-from typing import Any, Dict
+from typing import ClassVar
 
 from .core import NotesLibObject, Session
 from .enums import ACLFLAGS, ACLLEVEL, ACLTYPE, DB
@@ -62,7 +62,7 @@ class Database(NotesLibObject):
     read access to the database.
     """
 
-    __handleCache: Dict[tuple, Any] = {}
+    __handleCache: ClassVar = {}
 
     # TODO: Wrap Database.ACL with our own ACL
 

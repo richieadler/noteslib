@@ -62,7 +62,7 @@ class Document(NotesLibObject):
       as well as parameters to customize the conversion of Notes DATETIME and RICHTEXT
       items.
 
-    * The ``dict()`` method returns a ``dict`` version of the document.
+    * The ``asdict()`` method returns a ``dict`` version of the document.
 
     """
 
@@ -96,32 +96,30 @@ class Document(NotesLibObject):
         :param default: Value returned for a non-existing item
 
         :param convert_date: valid value in the enum DATECONV, or string,
-            affecting NotesDateTime fields returned as DATETIME variants in COM:
-
-            * DATECONV.DEFAULT returns Python datetime(s) corresponding to the date in UTC
-
-            * DATECONV.LOCAL returns Python datetime(s) converted to the local time
-
-            * DATECONV.NATIVE returns a list of ``NotesDateTime`` or ``NotesDateTimeRange`` values
-
-            * DATECONV.NATIVESTRING returns a list of the date(s) as returned by the @Text function
-              in the Notes formula language
-
-            * String "tz:\ *zonename*\ [:str]": Convert each NotesDateTime to the zone *zonename*
-              and, if `:str` is appended, convert it to the ISO-8601 representation of the date,
-              otherwise return a datetime instance in the indicated zone
-
-            Notice that if the field contains one or more `NotesDateTimeRange` objects,
-            the ``.Values`` attribute for the ``NotesItem`` returns a tuple with an even number of
-            DATETIME variants retrieved as ``pywintypes.datetime`` instances converted to
-            localtime but with a UTC time zone; instead, ``get()`` returns a list of correctly paired
-            lists containing two ``datetime.datetime`` values each, corresponding to the starting and
-            ending ``datetime`` instances for each range, all with the proper time zone according to
-            the specified `convert_date` value.
+            affecting NotesDateTime fields returned as DATETIME variants in COM.
 
         :param convert_rt: conversion for ``NotesRichText`` items
 
         :returns: ``list`` of elements of type corresponding to the item, and the subsequent conversions
+
+        Notice that if the field contains one or more `NotesDateTimeRange` objects,
+        the ``.Values`` attribute for the ``NotesItem`` returns a tuple with an even number of
+        DATETIME variants retrieved as ``pywintypes.datetime`` instances converted to
+        localtime but with a UTC time zone; instead, ``get()`` returns a list of correctly paired
+        lists containing two ``datetime.datetime`` values each, corresponding to the starting and
+        ending ``datetime`` instances for each range, all with the proper time zone according to
+        the specified `convert_date` value.
+
+        Possible ``convert_date`` values:
+
+            - DATECONV.DEFAULT returns Python datetime(s) corresponding to the date in UTC
+            - DATECONV.LOCAL returns Python datetime(s) converted to the local time
+            - DATECONV.NATIVE returns a list of ``NotesDateTime`` or ``NotesDateTimeRange`` values
+            - DATECONV.NATIVESTRING returns a list of the date(s) as returned by the @Text function
+              in the Notes formula language
+            - String "tz:\ *zonename*\ [:str]": Convert each NotesDateTime to the zone *zonename*
+              and, if `:str` is appended, convert it to the ISO-8601 representation of the date,
+              otherwise return a datetime instance in the indicated zone
 
         """
         doc = self._handle
@@ -188,7 +186,7 @@ class Document(NotesLibObject):
                 lst = [func(_.LSGMTTime) for _ in lst]
         return lst
 
-    def asdict(
+    def asdict(  # noqa: PLR0913
         self,
         *,
         omit_special=False,
