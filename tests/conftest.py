@@ -2,7 +2,9 @@ import pytest
 import wmi
 from lxml import etree
 
-from noteslib import Document, DocumentCollection, Session
+from noteslib.core import Session
+from noteslib.db import Database
+from noteslib.doc import Document, DocumentCollection
 from noteslib.enums import ACLLEVEL, EMBED
 
 DBSERVER = ''
@@ -52,7 +54,7 @@ def db_with_doc0(load_notes_db):
         body = doc.CreateRichTextItem("Body2")
         body.EmbedObject(EMBED.ATTACHMENT, "", __file__)
     doc.Save(1, 0, 1)
-    yield db
+    yield Database(obj=db)
     doc.Remove(True)
 
 
@@ -68,7 +70,7 @@ def db_with_doc_cat(load_notes_db):
             doc.ReplaceItemValue('Value', '-'.join(key))
             doc.Save(1, 0, 1)
             docs.append(doc)
-    yield db
+    yield Database(obj=db)
     for doc in docs:
         doc.Remove(True)
 

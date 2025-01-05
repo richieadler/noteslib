@@ -5,7 +5,8 @@ import datetime
 import pytest
 from pytest_check import check
 
-from noteslib import Document, DocumentCollection, Session
+from noteslib.core import Session
+from noteslib.doc import Document, DocumentCollection
 from noteslib.enums import DATECONV
 from tests.conftest import docs_cat
 

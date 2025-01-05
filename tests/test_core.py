@@ -1,4 +1,4 @@
-from noteslib import Session
+from noteslib.core import Session
 
 
 def test_session():
